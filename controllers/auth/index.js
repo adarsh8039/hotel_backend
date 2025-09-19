@@ -1,0 +1,355 @@
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
+const dotenv = require("dotenv");
+const nodemailer = require("nodemailer");
+const speakeasy = require("speakeasy");
+const logger = require("../../utils/logger");
+
+dotenv.config({path: ".env"});
+const {prisma} = require("../../models/connection");
+const {token} = require("morgan");
+
+const loginUser = async (req, res) => {
+  try {
+    const {email, password} = await req.body;
+
+    if (!email) {
+      return res
+        .status(400)
+        .json({status: false, message: "Please enter email"});
+    }
+    if (!password) {
+      return res
+        .status(400)
+        .json({status: false, message: "Please enter password"});
+    }
+
+    // const user = await prisma.guestmaster.findFirst({
+    //   where: {
+    //     OR: [{ login_email: email }, { password }],
+    //   },
+    //   select: {
+    //     id: true,
+    //     role_id: true,
+    //     fullname: true,
+    //     password: true,
+    //     privacy: true,
+    //     privacy_password: true,
+    //     image: true,
+    //     default_checkin: true,
+    //     default_checkout: true,
+    //     rolemaster: {
+    //       select: {
+    //         role: true,
+    //       },
+    //     },
+    //   },
+    // });
+    const user = await prisma.users.findFirst({
+      where: {
+        OR: [{email: email}, {password}],
+      },
+      select: {
+        id: true,
+        role_id: true,
+        fullname: true,
+        password: true,
+        // privacy: true,
+        // privacy_password: true,
+        // image: true,
+        // default_checkin: true,
+        // default_checkout: true,
+        rolemaster: {
+          select: {
+            role: true,
+          },
+        },
+      },
+    });
+    // console.log(user);
+
+    // Check if the user exists
+    if (!user) {
+      return res.status(404).json({status: false, message: "User not found"});
+    }
+
+    // Check if the provided password matches the hashed password in the database
+    const passwordMatch = await bcrypt.compare(password, user.password);
+
+    if (!passwordMatch) {
+      return res.status(401).json({status: false, message: "Invalid password"});
+    }
+
+    // Fetch additional user information like role_id and role_name from the database
+    const {
+      role_id,
+      fullname,
+      image,
+      id,
+      privacy,
+      privacy_password,
+      default_checkin,
+      default_checkout,
+      rolemaster: {role},
+    } = user;
+
+    // Fetch role details from role_master table
+    const roleDetails = await prisma.rolemaster.count({
+      where: {
+        id: role_id,
+      },
+    });
+
+    // Check if roleDetails is not null
+    if (roleDetails === 0) {
+      return res.status(404).json({status: false, message: "Role not found"});
+    }
+
+    // Fetch JWT secret key from environment variable
+    const jwtSecret = process.env.JWT_SECRET;
+
+    // Generate JWT token using the secret key from the environment variable
+    const jwtData = {
+      id,
+      fullname,
+      role_id,
+      image,
+      role,
+      privacy,
+      privacy_password,
+      default_checkin,
+      default_checkout,
+    };
+    const token = jwt.sign(jwtData, jwtSecret, {expiresIn: "48h"});
+
+    res.status(200).json({
+      status: true,
+      message: "Login successful",
+      username: fullname,
+      id: id,
+      role: role,
+      default_checkin,
+      privacy,
+      privacy_password,
+      image,
+      default_checkout,
+      token,
+    });
+  } catch (error) {
+    logger.error(error);
+    console.error(error);
+    res.status(500).json({status: false, message: error.message});
+  }
+};
+
+//send otp
+const sendOtp = async (req, res, next) => {
+  try {
+    let {email} = await req.body;
+    const user = await prisma.guestmaster.findFirst({
+      where: {
+        login_email: email,
+      },
+      select: {
+        id: true,
+        login_email: true,
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({status: false, message: "User not found"});
+    }
+
+    // Determine whether to use SSL or TLS based on the mail configuration
+    let smtpConfig = {
+      service: "gmail",
+      host: process.env.MAIL_HOST,
+      port: process.env.MAIL_PORT,
+      secure: true,
+      logger: true,
+      debug: true,
+      secureConnection: false,
+      auth: {
+        user: process.env.MAIL_USERNAME,
+        pass: process.env.MAIL_PASSWORD,
+      },
+      tls: {
+        rejectUnauthorized: false,
+      },
+    };
+
+    let transporter = nodemailer.createTransport(smtpConfig);
+    let {otp, secret, timestamp} = generateOtp();
+    req.app.set("otpSecret", secret);
+
+    let body = `Dear ${login_email},
+    
+    We've received a request to reset your password for Hotel-Booking Management System. To proceed with resetting your password, 
+    
+    please use the following One-Time Passcode (OTP): ${otp} 
+    
+    at the password reset page to create new password for your account.
+    
+    This OTP is valid for a limited time for security purposes.
+
+    If you did not request this password reset or have any concerns about your account security, please contact our support team immediately at [Support Contact Information] for assistance.
+
+    Thank you,
+    Hotel-Booking Management Team`;
+
+    let mailOptions = {
+      from: `"Hotel-Booking" <project@msquaretec.com>`,
+      to: login_email,
+      subject: "Reset Password with One-Time-Passcode (OTP) Request",
+      text: body,
+    };
+
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        logger.error(error);
+        console.error(error);
+        res.status(500).json({status: false, error: error});
+      } else {
+        console.log(`Message sent: ${info.messageId}`);
+
+        // Generate temporary token
+        const payload = {
+          otp_timestamp: timestamp,
+          user_id: user.id,
+          email: user.email,
+        };
+        const token = jwt.sign(payload, process.env.TEMP_JWT_SECRET, {
+          expiresIn: "2h",
+        });
+
+        return res.status(200).json({
+          status: true,
+          message: "Email sent successfully",
+          result: {
+            user_id: user.id,
+            messageId: info.messageId,
+            time_stamp: timestamp,
+            token: token,
+            email: user.email,
+          },
+        });
+      }
+    });
+  } catch (error) {
+    logger.error(error);
+    console.error(error);
+    res.status(404).send("404 not found");
+  }
+};
+
+//verify otp
+const verifyOtp = async (req, res, next) => {
+  try {
+    let {otp} = await req.body;
+    let {time_stamp} = await req.query;
+
+    let secret = req.app.get("otpSecret");
+    console.log("secret coming from session :>>", secret);
+    const otpValidWindow = 4 * 30 * 1000; // OTP valid for 2 steps (60 seconds)
+
+    let verified = speakeasy.totp.verify({
+      secret: secret,
+      encoding: "base32",
+      token: otp,
+      window: 0,
+      step: 60,
+    });
+
+    console.log("verified :>>", verified);
+
+    if (verified) {
+      console.log(`otp verified`);
+      res.status(200).json({status: true, message: "otp verified"});
+    } else if (Date.now() - time_stamp > otpValidWindow) {
+      console.log(`OTP expired`);
+      res.status(200).json({status: false, message: "OTP expired"});
+    } else {
+      console.log(`Invalid OTP`);
+      res.status(200).json({status: false, message: "Invalid OTP"});
+    }
+  } catch {
+    logger.error(error);
+    console.error(error);
+    res.status(500).json({status: false, message: error.message});
+  }
+};
+
+//generate otp
+const generateOtp = () => {
+  try {
+    // Generate a secret key
+    const secret = speakeasy.generateSecret({length: 10}); // Adjust the length as needed
+
+    // Get the OTP for the current time
+    const otp = speakeasy.totp({
+      secret: secret.base32,
+      encoding: "base32",
+      digits: 6,
+      step: 60,
+    });
+
+    let timestamp = Date.now(); // Record the timestamp of OTP generation
+
+    console.log("Secret:", secret.base32); // Store this secret securely for verification
+    console.log("Timestamp:", timestamp); // Store this secret securely for verification
+    console.log("Current OTP:", otp);
+
+    return {secret: secret.base32, otp, timestamp};
+  } catch (error) {
+    logger.error(error);
+    console.error(error);
+    res.status(500).json({status: false, message: error.message});
+  }
+};
+
+//reset password
+const resetpassword = async (req, res, next) => {
+  try {
+    let Id = +req.params.id;
+
+    if (!req.body.new_password) {
+      return res.status(400).json({
+        status: false,
+        message: "New password is required",
+      });
+    }
+
+    // Hash the new password provided
+    let newPasswordHash = await bcrypt.hash(req.body.new_password, 10);
+
+    // Prepare data object for update
+    let updateData = {
+      password: newPasswordHash,
+    };
+
+    // Update the user's details in the database
+    const result = await prisma.guestmaster.update({
+      where: {
+        id: Id,
+      },
+      data: updateData,
+      select: {
+        id: true,
+      },
+    });
+
+    console.log("Password updated successfully:", result);
+
+    res.status(200).json({
+      status: true,
+      message: "Password updated successfully",
+      result,
+    });
+  } catch (error) {
+    logger.error(error);
+    console.error("Error updating password:", error);
+    res.status(500).json({status: false, message: error.message});
+  }
+};
+
+module.exports = {loginUser, sendOtp, verifyOtp, resetpassword};

@@ -1,0 +1,291 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider          = "mysql"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+}
+
+model users {
+  id           Int          @id @default(autoincrement())
+  role_id      Int
+  email        String       @unique @db.VarChar(255)
+  password     String       @db.VarChar(255)
+  fullname     String       @db.VarChar(255)
+  phone_number String?      @db.VarChar(255)
+  created_at   DateTime     @default(now()) @db.Timestamp(0)
+  updated_at   DateTime     @default(now()) @updatedAt @db.Timestamp(0)
+  status       Boolean      @default(true)
+
+  rolemaster   rolemaster   @relation(fields: [role_id], references: [id], onUpdate: Restrict)
+
+  // Relations for standard user usage
+  reservations     reservationmaster[]   @relation("UserReservations")
+  billings         billingmaster[]
+  logs             logmaster[]
+
+  // Vendor back‑relations (where user acts as vendor/hotel)
+  guestmasters        guestmaster[]        @relation("UserGuestmaster")
+  vendorRooms         roommaster[]         @relation("UserRoommaster")
+  vendorReservations  reservationmaster[]  @relation("ReservationVendor")
+  roomServices        roomservicemaster[]  @relation("UserRoomService")
+}
+
+model guestmaster {
+  id               Int        @id @default(autoincrement())
+  role_id          Int?
+  email            String     @db.VarChar(255)
+  login_email      String?    @db.VarChar(255)
+  phone_number     String     @db.VarChar(255)
+  address          String     @db.VarChar(255)
+  password         String?    @db.VarChar(255)
+  created_at       DateTime   @default(now()) @db.Timestamp(0)
+  updated_at       DateTime   @default(now()) @db.Timestamp(0)
+  document         String     @db.VarChar(255)
+  document_images  String?    @db.Text
+  fullname         String     @db.VarChar(255)
+  gst_number       String?    @db.VarChar(255)
+  default_checkin  DateTime?  @db.Time(0)
+  default_checkout DateTime?  @db.Time(0)
+  gender           String?    @db.VarChar(255)
+  nationality      String?    @db.VarChar(255)
+  privacy          Boolean?
+  image            String?    @db.Text
+  privacy_password String?    @db.VarChar(255)
+  privacy_status   Boolean?
+  status           Boolean?   @default(true)
+  sign_image       String?    @db.VarChar(255)
+  stamp_image      String?    @db.VarChar(255)
+  user_id          Int?       // Vendor’s user ID
+
+  // Relations
+  billingmaster           billingmaster[]
+  reservationmaster       reservationmaster[]
+  user_reservation_master user_reservation_master[]
+  rolemaster              rolemaster? @relation(fields: [role_id], references: [id], onUpdate: Restrict, map: "guestmaster_ibfk_1")
+  user                    users?      @relation("UserGuestmaster", fields: [user_id], references: [id], onUpdate: Restrict, map: "guestmaster_user_id_fkey")
+
+  @@index([user_id], map: "guestmaster_user_id_idx")
+  @@index([role_id], map: "guestmaster_role_id_idx")
+}
+
+model reservationmaster {
+  id                      Int                       @id @default(autoincrement())
+  room_id                 Int?
+  check_in                DateTime?                 @db.DateTime(0)
+  check_out               DateTime?                 @db.DateTime(0)
+  booking_date            DateTime?                 @db.DateTime(0)
+  total_days              Int?
+  taxable_price           Int
+  cgst                    Int
+  sgst                    Int
+  igst                    Int
+  total_price             Int
+  created_at              DateTime                  @default(now()) @db.Timestamp(0)
+  updated_at              DateTime                  @default(now()) @updatedAt @db.Timestamp(0)
+  adv_payment             Int
+  payment_status          String                    @db.VarChar(255)
+  payment_type            String                    @db.VarChar(255)
+  status                  String?                   @default("BOOKED") @db.VarChar(255)
+  cancel_date             DateTime?                 @db.DateTime(0)
+  arrival_time            DateTime?                 @db.DateTime(0)
+  discount                Int
+  invoice_num             Int?
+  remaining_amount        Float                     @db.Float
+  received_amount         Float?                    @db.Float
+  gst_status              Boolean?                  @default(true)
+  extra_person_doc        String?                   @db.Text
+  user_id                 Int?
+  after_discount_price    Float?                    @db.Float
+  departure_time          DateTime?                 @db.DateTime(0)
+  perdayprice             Float?                    @db.Float
+  vendor_user_id          Int?    // Vendor’s user ID
+
+  billingmaster           billingmaster[]
+  roommaster              roommaster?              @relation(fields: [room_id], references: [id], onUpdate: Restrict, map: "reservationmaster_room_id_fkey")
+  guestmaster             guestmaster?             @relation(fields: [user_id], references: [id], onUpdate: Restrict, map: "reservationmaster_guest_id_fkey")
+  users                   users?                   @relation("UserReservations", fields: [user_id], references: [id], onUpdate: Restrict, map: "reservationmaster_user_id_fkey")
+  roomservicemaster       roomservicemaster[]
+  user_reservation_master user_reservation_master[]
+  vendor                   users?                @relation("ReservationVendor", fields: [vendor_user_id], references: [id], onUpdate: Restrict, map: "reservationmaster_vendor_user_id_fkey")
+
+  @@index([room_id], map: "reservationmaster_room_id_idx")
+  @@index([user_id], map: "reservationmaster_user_id_idx")
+}
+
+model rolemaster {
+  id          Int          @id @default(autoincrement())
+  role        String       @db.VarChar(255)
+  created_at  DateTime     @default(now()) @db.Timestamp(0)
+  updated_at  DateTime     @default(now()) @db.Timestamp(0)
+
+  guestmaster guestmaster[]
+  users       users[]
+}
+
+model roommaster {
+  id                Int        @id @default(autoincrement())
+  title             String     @db.VarChar(255)
+  floor_no          String?    @db.VarChar(255)
+  images            String?    @db.Text
+  bed_type          String?    @db.VarChar(255)
+  perdayprice       Int
+  description       String     @db.VarChar(255)
+  created_at        DateTime   @default(now()) @db.Timestamp(0)
+  updated_at        DateTime   @default(now()) @db.Timestamp(0)
+  tax_type          String?    @default("EXCLUDE") @db.VarChar(255)
+  facilities        String?    @db.VarChar(255)
+  disabled          Boolean    @default(false)
+  room_size         String?    @db.VarChar(255)
+  user_id           Int?       // Vendor’s user ID
+
+  reservationmaster reservationmaster[]
+
+  user               users?   @relation("UserRoommaster", fields: [user_id], references: [id], onUpdate: Restrict, map: "roommaster_user_id_fkey")
+
+  @@index([user_id], map: "roommaster_user_id_idx")
+}
+
+model roomservicemaster {
+  id                       Int                        @id @default(autoincrement())
+  reservation_id           Int?
+  order_date               DateTime                   @db.DateTime(0)
+  sub_total                Int
+  cgst                     Int?
+  sgst                     Int?
+  igst                     Int?
+  total                    Int
+  created_at               DateTime                   @default(now()) @db.Timestamp(0)
+  updated_at               DateTime                   @default(now()) @db.Timestamp(0)
+  payment_status           String?                    @default("UNPAID") @db.VarChar(255)
+  invoice_num              Int
+  concession               Int
+  phone_number             String                     @db.VarChar(255)
+  fullname                 String                     @db.VarChar(255)
+  check_in                 DateTime                   @db.DateTime(0)
+  check_out                DateTime                   @db.DateTime(0)
+  user_id                  Int?       // Vendor’s user ID
+
+  // Relations
+  reservationmaster        reservationmaster? @relation(fields: [reservation_id], references: [id], onUpdate: Restrict, map: "roomservicemaster_ibfk_1")
+  user                     users?             @relation("UserRoomService", fields: [user_id], references: [id], onUpdate: Restrict, map: "roomservicemaster_user_id_fkey")
+  room_service_item_master room_service_item_master[]
+
+  @@index([user_id], map: "roomservicemaster_user_id_idx")
+  @@index([reservation_id], map: "roomservicemaster_reservation_id_idx")
+}
+
+model fooditemmaster {
+  id                       Int                        @id @default(autoincrement())
+  item_name                String
+  price                    Float                      @db.Float
+  created_at               DateTime                   @default(now()) @db.Timestamp(0)
+  updated_at               DateTime                  @default(now()) @db.Timestamp(0)
+  status                   Boolean?                   @default(true)
+
+  room_service_item_master room_service_item_master[]
+}
+
+model room_service_item_master {
+  id                Int                @id @default(autoincrement())
+  quantity          Int
+  price             Int
+  cgst              Int?
+  sgst              Int?
+  igst              Int?
+  total             Int
+  item_id           Int?
+  service_id        Int?
+  created_at        DateTime           @default(now()) @db.Timestamp(0)
+  updated_at        DateTime           @default(now()) @db.Timestamp(0)
+  discount          Int?
+
+  fooditemmaster     fooditemmaster?    @relation(fields: [item_id], references: [id], onUpdate: Restrict, map: "room_service_item_master_ibfk_1")
+  roomservicemaster  roomservicemaster? @relation(fields: [service_id], references: [id], onUpdate: Restrict, map: "room_service_item_master_ibfk_2")
+
+  @@index([item_id], map: "room_service_item_master_item_id_idx")
+  @@index([service_id], map: "room_service_item_master_service_id_idx")
+}
+
+model expenses_master {
+  id          Int      @id @default(autoincrement())
+  date        DateTime @db.DateTime(0)
+  description String   @db.VarChar(255)
+  amount      Float    @db.Float
+  created_at  DateTime @default(now()) @db.Timestamp(0)
+  updated_at  DateTime @default(now()) @db.Timestamp(0)
+  status      Boolean? @default(true)
+}
+
+model user_reservation_master {
+  id                Int               @id @default(autoincrement())
+  reservation_id    Int
+  guest_id          Int
+  company_id        Int?
+  arrived_from      String?           @db.VarChar(255)
+  destination       String?           @db.VarChar(255)
+  mode_of_transport String?           @db.VarChar(255)
+  purpose_of_visit  String?           @db.VarChar(255)
+  created_at        DateTime          @default(now()) @db.Timestamp(0)
+  updated_at        DateTime          @default(now()) @db.Timestamp(0)
+
+  reservationmaster reservationmaster @relation(fields: [reservation_id], references: [id], onUpdate: Restrict, map: "user_reservation_master_ibfk_2")
+  guestmaster        guestmaster      @relation(fields: [guest_id], references: [id], onUpdate: Restrict, map: "user_reservation_master_ibfk_1")
+  company_master     company_master?  @relation(fields: [company_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "user_reservation_master_ibfk_3")
+
+  @@unique([reservation_id, guest_id], map: "res_guest_unique_id")
+  @@index([reservation_id], map: "user_reservation_master_reservation_id_idx")
+  @@index([guest_id], map: "user_reservation_master_guest_id_idx")
+  @@index([company_id], map: "user_reservation_master_company_id_idx")
+}
+
+model company_master {
+  id                      Int                       @id @default(autoincrement())
+  company_name            String?                   @db.VarChar(255)
+  company_gst             String?                   @db.VarChar(255)
+  created_at              DateTime                  @default(now()) @db.Timestamp(0)
+  updated_at              DateTime                  @default(now()) @db.Timestamp(0)
+  status                  Boolean?                  @default(true)
+
+  user_reservation_master user_reservation_master[]
+}
+
+model logmaster {
+  id        Int       @id @default(autoincrement())
+  user_id   Int?
+  datetime  DateTime? @default(now()) @db.DateTime(0)
+  module    String?   @db.VarChar(255)
+  operation String?   @db.VarChar(10)
+  fields    String?   @db.Text
+  oldvalue  String?   @db.Text
+  newvalue  String?   @db.Text
+  status    String?   @db.VarChar(50)
+
+  user users? @relation(fields: [user_id], references: [id])
+
+  @@index([user_id], map: "logmaster_user_id_idx")
+}
+
+model billingmaster {
+  id             Int                @id @default(autoincrement())
+  reservation_id Int?
+  user_id        Int?
+  guest_id       Int?
+  invoice_num    Int?
+  guest_name     String?            @db.VarChar(255)
+  mobile_no      String?            @db.VarChar(255)
+  guest_email    String?            @db.VarChar(255)
+  company_name   String?            @db.VarChar(255)
+  company_gst    String?            @db.VarChar(15)
+  invoice_date   DateTime?          @default(now()) @db.DateTime(0)
+
+  reservationmaster reservationmaster? @relation(fields: [reservation_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "billingmaster_ibfk_1")
+  user              users?             @relation(fields: [user_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "billingmaster_user_id_fkey")
+  guestmaster       guestmaster?       @relation(fields: [guest_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "billingmaster_guest_id_fkey")
+
+  @@index([reservation_id], map: "billingmaster_reservation_id_idx")
+  @@index([user_id], map: "billingmaster_user_id_idx")
+  @@index([guest_id], map: "billingmaster_guest_id_idx")
+}

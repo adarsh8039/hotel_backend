@@ -1,0 +1,1324 @@
+/* API DOCUMENTATION OF HOTEL-BOOKING MANAGEMENT SYSTEM */
+
+/* {{baseurl}} : http://localhost:3000 */
+
+1.)AUTHENTICATION:-
+
+    1.1) LOGIN :-
+
+        url              :- {{baseurl}}/admin/login
+        method           :- POST
+        body parameters  :- 1) email 2)password
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(jwt-token)
+        }
+
+    1.2) SEND OTP :-
+
+        url              :- {{baseurl}}/admin/send/otp
+        method           :- POST
+        body parameters  :- 1) email 
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(otp on email)
+        }  
+
+    1.3) VERIFY OTP :-
+
+        url              :- {{baseurl}}/admin/verify/otp
+        method           :- POST
+        parameters       :- 1) sec_code 2) timr_stamp
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: jwt token
+        body parameters  :- 1) otp 
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(otp verified successfully)
+        } 
+
+    1.4) RESET PASSWORD :-
+
+        url              :- {{baseurl}}/admin/reset/password/120
+        method           :- POST
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: jwt token
+        body parameters  :- 1) new_password 
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(password changed successfully)
+        }      
+
+2.) DASHBOARD :-
+
+      url              :- {{baseurl}}/dashboard
+      method           :- get
+      authorization    :- 1) Type: Bearer Token,
+                          2) Token: token
+      body parameters  :- NONE
+        
+      responses        :- (On Error)
+      {
+        success : false(Boolean),
+        message : <Error Message>
+      }
+      response         :- (On Success)
+      {
+        success : true(Boolean),
+        message : <success message>
+		result  : <object>(id of updated role)
+      }
+
+3.) ROLE:-
+
+    3.1) CREATE ROLE :-
+
+        url              :- {{baseurl}}/roles
+        method           :- POST
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: token
+        body parameters  :- 1) role
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(role created successfully)
+        }
+
+    3.2) READ ALL ROLES :-
+
+        url              :- {{baseurl}}/roles
+        method           :- GET
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: token
+        body parameters  :- NONE
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(all roles)
+        }  
+
+    3.3) READ SPECIFIC ROLE :-
+
+        url              :- {{baseurl}}/role/:id [id of the role you want to view]
+        method           :- GET
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: token
+        body parameters  :- NONE
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(data of specific role)
+        } 
+
+    3.4) UPDATE ROLE :-
+
+        url              :- {{baseurl}}/roles/:id [id of the role you want to update]
+        method           :- PUT
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: jwt token
+        body parameters  :- 1) role
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(data of updated role)
+        }   
+
+    3.5) DELETE ROLE :-
+
+        url              :- {{baseurl}}/roles/:id [id of the role you want to delete]
+        method           :- DELETE
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: jwt token
+        body parameters  :- NONE
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(id of deleted role)
+        }       
+
+4.) GUESTS:-
+
+    4.1) CREATE GUEST :-
+
+        url              :- {{baseurl}}/add/new/guest
+        method           :- POST
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: token
+        body parameters  :- 1) fullname 2) email 3)phone_number 4)nationality 5)address 6)gender 7)document 8)document_images
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(GUest created successfully)
+        }
+
+    4.2) READ ALL GUESTS :-
+
+        url              :- {{baseurl}}/view/allguests
+        method           :- GET
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: token
+        body parameters  :- NONE
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(all guests)
+        }  
+
+    4.3) READ SPECIFIC GUEST :-
+
+        url              :- {{baseurl}}/view/specefic/guest/:id [id of the guest you want to view]
+        method           :- GET
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: token
+        body parameters  :- NONE
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(data of specific guest)
+        } 
+
+    4.4) UPDATE GUEST :-
+
+        url              :- {{baseurl}}/edit/guestdetails/:id [id of the guest you want to update]
+        method           :- PUT
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: jwt token
+        body parameters  :- 1) fullname 2) email 3)phone_number 4)nationality 5)address 6)gender 7)document 8)document_images
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(data of updated guest)
+        }   
+
+    4.5) DELETE GUEST :-
+
+        url              :- {{baseurl}}/delete/guest/:id [id of the guest you want to delete]
+        method           :- DELETE
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: jwt token
+        body parameters  :- NONE
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(id of deleted guest)
+        }  
+
+    4.6) ADD GUEST BY FILE :-
+
+        url              :- {{baseurl}}/addguest/byfile
+        method           :- POST
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: jwt token
+        body parameters  :- 1) excelFile
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(guest inserted successfully)
+        }  
+
+    4.7) UPDATE PROFILE :-
+
+        url              :- {{baseurl}}/update/profile
+        method           :- POST
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: jwt token
+        body parameters  :- 1) fullname 2)email 3)phone_number 4)address 5)document 6)gst_number 7)image
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(profile updated successfully)
+        }     
+
+5.) PRRIVACY :-
+
+    5.1) GET PRIVACY :-
+
+        url              :- {{baseurl}}/get/privacy
+        method           :- GET
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: token
+        body parameters  :- NONE
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(Privacy fetched successfully)
+        } 
+
+    5.2) VERIFY PRIVACY PASSOWRD :-
+
+        url              :- {{baseurl}}/verify/privacypassword
+        method           :- POST
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: token
+        body parameters  :- 1) Ppassword
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(password verified)
+        }
+
+    5.3) UPDATE PRIVACY STATUS AND PASSWORD :-
+
+        url              :- {{baseurl}}/update/privacypassword
+        method           :- PUT
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: token
+        body parameters  :- 1) oldPassword 2) newPPassword 3) privacy
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(Privacy status and password updated successfully)
+        }  
+
+    5.4) ENABLE PRIVACY  :-
+
+        url              :- {{baseurl}}/update/privacy
+        method           :- PUT
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: token
+        body parameters  :- 1) privacy
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(Privacy enabled successfully)
+        }         
+
+6.) BOOKING :-
+
+    6.1) BOOK ROOM :-
+
+        url              :- {{baseurl}}/booking/:id [id of the room to be booked]
+        method           :- POST
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: token
+        body parameters  :- person[ 1)fullname, 2)email, 3)phone_number, 4)address, 5)gender, 6)document, 7)nationality, 8)company_name, 9)company_gst, 10)mode_of_transport, 11)arrived_from, 12)destination, 13)purpose_of_visit, 14)document_images[], 15)booking_date, 16)payment_type, 17)check_in, 18)check_out, 19)total_days, 20)perdayprice, 21)total_price, 22)remaining_amount, 23)payment_status, 24)adv_payment, 25)cgst, 26)sgst, 27)igst, 28)taxable_price, 29)discount, 30)after_discount_price, ]
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(room booked successfully)
+        }
+
+    6.2) READ ALL BOOKINGS :-
+
+        url              :- {{baseurl}}/booking
+        method           :- GET
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: token
+        body parameters  :- NONE
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(all rooms booking)
+        }  
+
+    6.3) READ ALL BOOKING BY DATE FILTERING :-
+
+        url              :- {{baseurl}}/all/booking
+        method           :- POST
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: token
+        body parameters  :- 1)check_in 2)check_out
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(booking data according to date filtering)
+        } 
+
+    6.4) READ BOOKING OF SPECEFIC ROOM :-
+
+        url              :- {{baseurl}}/booking/by-room/:id [id of the specefic room]
+        method           :- GET
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: jwt token
+        body parameters  :- NONE
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(data of all booking of specefic room)
+        }   
+
+    6.5) UPDATE BOOKING :-
+
+        url              :- {{baseurl}}/booking/edit/:id [id of the booking recoed you want to edit]
+        method           :- PUT
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: jwt token
+        body parameters  :- 1)booking_date 2)payment_type 3)check_in 4)check_out 5)perdayprice 6)total_days 7)total_price 8)payment_status 9)adv_payment 10)cgst 11)sgst 12)igst 13)taxable_price 14)remaining_amount 15)after_discount_price 16)discount
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(booking edited successfully)
+        }  
+
+    6.6) CANCEL BOOKING :-
+
+        url              :- {{baseurl}}/booking/cancel/:id [id of the booking you want to cancel]
+        method           :- PUT
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: jwt token
+        body parameters  :- NONE
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(booking canceled successfully)
+        }  
+
+    6.7) UPDATE BOOKING PAYMENT :-
+
+        url              :- {{baseurl}}/update/gst/status/:id [id of the record to update payment status]
+        method           :- PUT
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: jwt token
+        body parameters  :- 1) gst_status
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(payment status updated successfully (with or without gst))
+        } 
+
+    6.8) CHECKOUT :-
+
+        url              :- {{baseurl}}/update/status/completed/:id [id of the record to checkout]
+        method           :- PUT
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: jwt token
+        body parameters  :- NONE
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(guest check out successfully)
+        } 
+
+7.) ROOMS :-
+
+    7.1) ALL ROOMS :-
+
+        url              :- {{baseurl}}/get/allrooms 
+        method           :- POST
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: token
+        body parameters  :- 1)check_in, 2)check_out,
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(rooms fetched successfully)
+        }
+
+    7.2) CREATE ROOM :-
+
+        url              :- {{baseurl}}/add/rooms
+        method           :- POST
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: token
+        body parameters  :- 1)title 2)floor_no 3)bed_type 4)facilities 5)perdayprice 6)description 7)status
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(room created successfully)
+        }  
+
+    7.3) GET SPECIFIC ROOM :-
+
+        url              :- {{baseurl}}/get/speceficroom/:id [id of the room]
+        method           :- GET
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: token
+        body parameters  :- NONE
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(specific room details)
+        } 
+
+    7.4) UPDATE ROOM DETAILS :-
+
+        url              :- {{baseurl}}/edit/roomdetails/:id [id of the specefic room]
+        method           :- PUT
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: jwt token
+        body parameters  :- 1)title 2)floor_no 3)bed_type 4)perdayprice 5)description
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(room details updated successfully)
+        }   
+
+    7.5) ENABLE/DISABLE ROOM :-
+
+        url              :- {{baseurl}}/rooms/update/disabled/:id [id of the room you want to enable or disable]
+        method           :- POST
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: jwt token
+        body parameters  :- 1)disabled
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(booking edited successfully)
+        }  
+
+    7.6) ADD ROOM BY FILE :-
+
+        url              :- {{baseurl}}/addrooms/byfile 
+        method           :- POST
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: jwt token
+        body parameters  :- 1) excelFile
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(rooms created successfully)
+        }  
+
+8.) ROOM SERVICE :-
+
+    8.1) ALL ROOM SERVICE :-
+
+        url              :- {{baseurl}}/view/roomservice
+        method           :- GET
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: token
+        body parameters  :- NONE
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(room services fetched successfully)
+        }
+
+    8.2) SPECIFIC ROOM SERVICE :-
+
+        url              :- {{baseurl}}/view/roomservice/:id [id for specefic room service]
+        method           :- GET
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: token
+        body parameters  :- NONE
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(specific room service details)
+        }  
+
+    8.3) ADD ROOM SERVICE :-
+
+        url              :- {{baseurl}}/roomservice
+        method           :- POST
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: jwt token
+        body parameters  :- 1)check_in 2)check_out 3)concession 4)fullname 5)invoice_num 6)order_date 7)phone_number 8)service_item[ item_id, item_name, price, quantity, total ] 9)sub_total 10)total
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(room service created successfully)
+        }         
+
+    8.4) EDIT ROOM SERVICE :-
+
+        url              :- {{baseurl}}/edit/roomservice/:id [id to edit room service]
+        method           :- PUT
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: token
+        body parameters  :- 1)check_in 2)check_out 3)concession 4)fullname 5)invoice_num 6)order_date 7)phone_number 8)service_items[{ id, item_id, item_name, price, quantity, service_id, total }] 9)sub_total 10)total
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(room service updated successfully)
+        } 
+
+    8.5) ROOM SERVICE PAYMENT :-
+
+        url              :- {{baseurl}}/update/payment/status/:id [id of the specefic room service]
+        method           :- POST
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: jwt token
+        body parameters  :- NONE
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(payment done successfully)
+        }   
+
+    8.6) LAST INVOICE NUMBER :-
+
+        url              :- {{baseurl}}/last/invoiceno
+        method           :- GET
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: jwt token
+        body parameters  :- NONE
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(next invoice number)
+        }  
+
+9.) FOOD ITEMS
+
+    9.1)ALL FOOD ITEMS :-
+
+        url              :- {{baseurl}}/getall/fooditems
+        method           :- GET
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: jwt token
+        body parameters  :- NONE
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(guest check out successfully)
+        }    
+
+    9.2) ADD FOOD ITEMS :-
+
+        url              :- {{baseurl}}/add/fooditems
+        method           :- POST
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: jwt token
+        body parameters  :- 1)item_name 2)price
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(food item added successfully)
+        }     
+
+    9.3) UPDATE FOOD ITEMS :-
+
+        url              :- {{baseurl}}/edit/fooditem/:id [id of the food item you want to update]
+        method           :- PUT
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: jwt token
+        body parameters  :- 1)item_name 2)price
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(food item updated successfully)
+        }    
+
+    9.4) DELETE FOOD ITEMS :-
+
+        url              :- {{baseurl}}/delete/fooditem/:id [id of the food item you want to delete]
+        method           :- DELETE
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: jwt token
+        body parameters  :- NONE
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(food item deleted successfully)
+        }   
+
+    9.5) ADD FOOD ITEMS BY FILE:-
+
+        url              :- {{baseurl}}/food-item/byfile
+        method           :- POST
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: jwt token
+        body parameters  :- 1)excelFile
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(food item added successfully)
+        }  
+
+10.) BILLING
+
+    10.1) ALL RESERVATION INVOICE :-
+
+        url              :- {{baseurl}}/billing
+        method           :- GET
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: jwt token
+        body parameters  :- NONE
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(all reservation invoice)
+        }    
+
+    10.2) SPECEFIC RESERVATION INVOICE :-
+
+        url              :- {{baseurl}}/room/invoice/:id [id for the room invoice]
+        method           :- GET
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: jwt token
+        body parameters  :- NONE
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(room invoice fetched successfully)
+        }     
+
+    10.3) UPDATE BILLING :-
+
+        url              :- {{baseurl}}/edit/bill/:id [id of the invoice you want to update]
+        method           :- PUT
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: jwt token
+        body parameters  :- 1)invoice_date 2)fullname 3)phone_number 4)adv_payment 5)after_discount_price 6)booking_date 7)cgst 8)check_in 9)check_out 10)company_gst 11)company_name 12)discount 13)email 14)igst 15)invoice_num 16)payment_status 17)payment_type 18)perdayprice 19)remaining_amount 20)sgst 21)taxable_price 22)total_days 23)total_price
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(invoice updated successfully)
+        }    
+
+11.) REPORTS  
+
+    11.1) BOOKED ROOMS REPORT :-
+
+        url              :- {{baseurl}}/bookedrooms/report
+        method           :- GET
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: jwt token
+        body parameters  :- NONE
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(all booked rooms report)
+        }
+
+    11.2) BOOKED ROOM REPORT WITH DATE AND GUEST FILTERING (guest name can be null) :-
+
+        url              :- {{baseurl}}/booked/room/report
+        method           :- POST
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: jwt token
+        body parameters  :- 1)from 2)id 3)phone_number 4)to
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(booked room report with filtering)
+        } 
+
+    11.3) CANCELLED ROOMS REPORT WITH DATE AND GUEST FILTERING (guest name can be null) :-
+
+        url              :- {{baseurl}}/cancel/room/report
+        method           :- POST
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: jwt token
+        body parameters  :- 1)from 2)to 3)id 4)phone_nember
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(canceled rooms report with filtering)
+        }  
+
+    11.4) ROOM SERVICE REPORT WITH DATE AND GUEST FILTERING (guest name can be null) :-
+
+        url              :- {{baseurl}}/food/order/report
+        method           :- POST
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: jwt token
+        body parameters  :- 1)from 2)to 3)id 4)phone_nember
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(room service report with filtering)
+        }
+
+    11.5) GUEST HISTORY WITH DATE AND GUEST FILTERING (guest name can be null) :-
+
+        url              :- {{baseurl}}/get/guest/history
+        method           :- POST
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: jwt token
+        body parameters  :- 1)from 2)to 3)id 4)phone_nember
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(guest history report with filtering)
+        } 
+
+12.) EXPENSES  
+
+    12.1) ALL EXPENSES :-
+
+        url              :- {{baseurl}}/expenses
+        method           :- GET
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: jwt token
+        body parameters  :- NONE
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(all expenses)
+        }
+
+    12.2) ADD EXPENSES :-
+
+        url              :- {{baseurl}}/expenses
+        method           :- POST
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: jwt token
+        body parameters  :- 1)amount 2)date 3)description
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(expenses added successfully)
+        } 
+
+    12.3) UPDATE EXPENSES :-
+
+        url              :- {{baseurl}}/expenses/edit/:id [id of the expense you want to update]
+        method           :- PUT
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: jwt token
+        body parameters  :- 1)amount 2)date 3)description
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(expenses updated successfully)
+        }  
+
+    12.4) DELETE EXPENSES  :-
+
+        url              :- {{baseurl}}/expenses/delete/:id [id of the expense you want to delete]
+        method           :- DELETE
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: jwt token
+        body parameters  :- NONE
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(expense deleted successfully)
+        }
+
+    12.5) ADD EXPENSES BY FILE :-
+
+        url              :- {{baseurl}}/expenses/byfile
+        method           :- POST
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: jwt token
+        body parameters  :- 1)excelFile
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(expenses added successfully)
+        }  
+
+13.) COMPANY  
+
+    13.1) ALL COMPANIES :-
+
+        url              :- {{baseurl}}/company
+        method           :- GET
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: jwt token
+        body parameters  :- NONE
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(all companies)
+        }
+
+    13.2) ADD COMPANY :-
+
+        url              :- {{baseurl}}/company
+        method           :- POST
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: jwt token
+        body parameters  :- 1)company_gst 2)company_name
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(expenses added successfully)
+        } 
+
+    13.3) UPDATE COMPANY :-
+
+        url              :- {{baseurl}}/company/edit/:id [id of the company you want to update]
+        method           :- PUT
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: jwt token
+        body parameters  :- 1)company_gst 2)company_name
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(company updated successfully)
+        }  
+
+    13.4) DELETE COMPANY  :-
+
+        url              :- {{baseurl}}/company/delete/:id [id of the company you want to delete]
+        method           :- DELETE
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: jwt token
+        body parameters  :- NONE
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(company deleted successfully)
+        }
+
+    13.5) ADD COMPANY BY FILE :-
+
+        url              :- {{baseurl}}/company/byfile
+        method           :- POST
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: jwt token
+        body parameters  :- 1)excelFile
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(company added successfully)
+        }                       
+
+14.) ALL LOGS :-
+
+        url              :- {{baseurl}}/all/logs
+        method           :- GET
+        authorization    :- 1) Type: Bearer Token,
+                            2) Token: jwt token
+        body parameters  :- NONE
+        
+        responses        :- (On Error)
+        {
+            success : false(Boolean),
+            message : <Error Message>
+        }
+        response         :- (On Success)
+        {
+            success : true(Boolean),
+            message : <success message>
+            result  : <object>(logs fetched successfully)
+        }         
