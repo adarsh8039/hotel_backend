@@ -4,11 +4,12 @@ const session = require("express-session");
 const path = require("path");
 const cookieParser = require("cookie-parser");
 const logger = require("morgan");
+const serverless = require("serverless-http");
 
 const cors = require("cors");
-const { PrismaClient } = require("@prisma/client");
+const {PrismaClient} = require("@prisma/client");
 const prisma = new PrismaClient();
-const { verifyToken } = require("./middlewares/validation");
+const {verifyToken} = require("./middlewares/validation");
 
 const NodeCache = require("node-cache");
 
@@ -22,7 +23,7 @@ const app = express();
 app.set("prisma", prisma);
 app.use(logger("dev"));
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({extended: false}));
 app.use(
   cors({
     credentials: true,
@@ -65,7 +66,9 @@ app.use((err, req, res, next) => {
   res.locals.error = req.app.get("env") === "development" ? err : {};
 
   // render the error page
-  res.status(err.status || 500).json({ status: false, message: err.message });
+  res.status(err.status || 500).json({status: false, message: err.message});
 });
 
-module.exports = app;
+// module.exports = app;
+
+module.exports.handler = serverless(app);
