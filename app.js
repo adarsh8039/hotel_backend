@@ -18,6 +18,7 @@ const myCache = new NodeCache();
 
 const indexRouter = require("./routes/index");
 const loginRouter = require("./routes/loginroutes");
+const vendorRouter = require("./routes/vendor.routes");
 
 const app = express();
 app.set("prisma", prisma);
@@ -52,6 +53,7 @@ app.set("cache", myCache);
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/admin", loginRouter);
+app.use("/vendor", vendorRouter);
 
 app.use("/", verifyToken, indexRouter);
 

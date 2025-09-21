@@ -1,4 +1,4 @@
-const { prisma } = require("../../models/connection");
+const {prisma} = require("../../models/connection");
 const logger = require("../../utils/logger");
 const jwt = require("jsonwebtoken");
 const imagePath = "https://api.hotel.msquaretec.com";
@@ -14,6 +14,7 @@ const myCache = new NodeCache();
 // add guest
 const addguest = async (req, res, next) => {
   try {
+    const {userDetails} = req.headers;
     let data = await req.body;
 
     // Conditionally update document_images only if req.files.document_images exists
@@ -35,10 +36,17 @@ const addguest = async (req, res, next) => {
       data.image = `${req.files.image[0].filename}`;
     }
 
+    const role = await prisma.rolemaster.findFirst({
+      where: {role: "User"},
+    });
+    if (!role) {
+      res.status(422).json({status: false, message: "Role not found!"});
+    }
+
     // Create the guest entry in the database
     const guest = await prisma.guestmaster.create({
       data: {
-        role_id: 2,
+        role_id: role.id,
         fullname: data.fullname,
         email: data.email,
         phone_number: data.phone_number,
@@ -49,6 +57,7 @@ const addguest = async (req, res, next) => {
         nationality: data.nationality,
         company_name: data.company_name,
         gender: data.gender,
+        user_id: userDetails.id,
       },
       select: {
         id: true,
@@ -58,10 +67,11 @@ const addguest = async (req, res, next) => {
     myCache.del("Guest"); // Invalidate the cache
     res
       .status(200)
-      .json({ status: true, message: "Guest inserted successfully!", guest });
+      .json({status: true, message: "Guest inserted successfully!", guest});
   } catch (error) {
+    console.log(error);
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -71,7 +81,7 @@ const allguests = async (req, res, next) => {
     const count = await prisma.guestmaster.count();
 
     if (count === 0) {
-      return res.status(404).json({ status: false, message: "Data not found" });
+      return res.status(404).json({status: false, message: "Data not found"});
     } else {
       const result = await prisma.guestmaster.findMany({
         where: {
@@ -97,6 +107,13 @@ const allguests = async (req, res, next) => {
               check_out: true,
             },
           },
+          user: {
+            select: {
+              id: true,
+              fullname: true,
+              email: true,
+            },
+          },
         },
         orderBy: {
           id: "asc",
@@ -109,15 +126,23 @@ const allguests = async (req, res, next) => {
           : [];
       });
 
+      const formattedResult = result.map((guest) => {
+        const {user, ...rest} = guest;
+        return {
+          ...rest,
+          created_by: user, // renamed alias
+        };
+      });
+
       return res.status(200).json({
         status: true,
         message: "Data fetched successfully",
-        result,
+        formattedResult,
       });
     }
   } catch (error) {
     logger.error(error);
-    return res.status(500).json({ status: false, message: error.message });
+    return res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -127,7 +152,7 @@ const viewguests = async (req, res, next) => {
     const count = await prisma.guestmaster.count();
 
     if (count === 0) {
-      return res.status(404).json({ status: false, message: "Data not found" });
+      return res.status(404).json({status: false, message: "Data not found"});
     } else {
       const result = await prisma.guestmaster.findMany({
         where: {
@@ -156,7 +181,7 @@ const viewguests = async (req, res, next) => {
     }
   } catch (error) {
     logger.error(error);
-    return res.status(500).json({ status: false, message: error.message });
+    return res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -170,7 +195,7 @@ const speceficguest = async (req, res, next) => {
       },
     });
     if (count === 0) {
-      res.status(404).json({ status: false, message: "data not found" });
+      res.status(404).json({status: false, message: "data not found"});
     } else {
       const result = await prisma.guestmaster.findFirst({
         where: {
@@ -187,23 +212,23 @@ const speceficguest = async (req, res, next) => {
 
       res
         .status(200)
-        .json({ status: true, message: "data fetched successfully", result });
+        .json({status: true, message: "data fetched successfully", result});
     }
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
 //edit guest
 const editguest = async (req, res, next) => {
   try {
-    const { id } = req.params;
+    const {id} = req.params;
     const data = req.body;
 
     // Fetch current guest data to retain current document_images and image if not updated
     const currentGuest = await prisma.guestmaster.findUnique({
-      where: { id: +id },
+      where: {id: +id},
     });
 
     let updateData = {
@@ -268,8 +293,8 @@ const editguest = async (req, res, next) => {
 
     const result = await prisma.guestmaster.update({
       data: updateData,
-      where: { id: +id },
-      select: { id: true, document_images: true, image: true },
+      where: {id: +id},
+      select: {id: true, document_images: true, image: true},
     });
 
     myCache.del("Guest"); // Invalidate the cache
@@ -280,7 +305,7 @@ const editguest = async (req, res, next) => {
     });
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -296,13 +321,13 @@ const editprofile = async (req, res, next) => {
     const data = req.body;
 
     // Initialize the updateData object with the data from req.body
-    let updateData = { ...data };
+    let updateData = {...data};
 
     // Conditionally update image only if req.file exists
     if (req.file) {
       // Delete old image if exists
       const currentGuest = await prisma.guestmaster.findUnique({
-        where: { id: +userId },
+        where: {id: +userId},
       });
 
       if (currentGuest.image) {
@@ -325,7 +350,7 @@ const editprofile = async (req, res, next) => {
 
     const result = await prisma.guestmaster.update({
       data: updateData,
-      where: { id: +userId },
+      where: {id: +userId},
       select: {
         id: true,
         image: true,
@@ -342,7 +367,7 @@ const editprofile = async (req, res, next) => {
     });
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -383,10 +408,10 @@ const disableguest = async (req, res, next) => {
     });
     res
       .status(200)
-      .json({ status: true, message: "Guest deleted successfully", result });
+      .json({status: true, message: "Guest deleted successfully", result});
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -402,12 +427,12 @@ const addguestbyexcel = async (req, res) => {
     }
 
     // Read the uploaded Excel file from memory
-    const workbook = xlsx.read(req.file.buffer, { type: "buffer" });
+    const workbook = xlsx.read(req.file.buffer, {type: "buffer"});
     const sheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[sheetName];
 
     // Convert the worksheet to JSON
-    const data = xlsx.utils.sheet_to_json(worksheet, { raw: false });
+    const data = xlsx.utils.sheet_to_json(worksheet, {raw: false});
 
     // Iterate over each row in the JSON data and insert into the database
     const promises = data.map(async (item) => {
@@ -429,7 +454,7 @@ const addguestbyexcel = async (req, res) => {
     });
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -444,14 +469,14 @@ const getGuestPrivacy = async (req, res, next) => {
     console.log("req.body", req.body);
 
     const currentGuest = await prisma.guestmaster.findUnique({
-      where: { id: +userId },
+      where: {id: +userId},
       select: {
         privacy_status: true,
       },
     });
 
     if (!currentGuest) {
-      res.status(404).json({ status: false, message: "data not found" });
+      res.status(404).json({status: false, message: "data not found"});
     } else {
       res.status(200).json({
         status: true,
@@ -461,7 +486,7 @@ const getGuestPrivacy = async (req, res, next) => {
     }
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -477,7 +502,7 @@ const changeGuestPrivacy = async (req, res, next) => {
 
     // Fetch current guest details
     const currentGuest = await prisma.guestmaster.findUnique({
-      where: { id: +userId },
+      where: {id: +userId},
       select: {
         privacy: true,
         privacy_status: true,
@@ -488,9 +513,9 @@ const changeGuestPrivacy = async (req, res, next) => {
     // If privacy_status is 1 update to enable privacy
     if (privacyStatus === true) {
       const result = await prisma.guestmaster.update({
-        data: { privacy_status: privacyStatus },
-        where: { id: +userId },
-        select: { privacy_status: true },
+        data: {privacy_status: privacyStatus},
+        where: {id: +userId},
+        select: {privacy_status: true},
       });
       return res.status(200).json({
         status: true,
@@ -522,9 +547,9 @@ const changeGuestPrivacy = async (req, res, next) => {
 
       // Update privacy status to false (unlocked)
       const result = await prisma.guestmaster.update({
-        data: { privacy_status: false },
-        where: { id: +userId },
-        select: { privacy_status: true },
+        data: {privacy_status: false},
+        where: {id: +userId},
+        select: {privacy_status: true},
       });
 
       return res.status(200).json({
@@ -540,7 +565,7 @@ const changeGuestPrivacy = async (req, res, next) => {
     }
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -585,7 +610,7 @@ const changePPassword = async (req, res, next) => {
       if (!oldPasswordMatch) {
         return res
           .status(400)
-          .json({ status: false, message: "Old password is incorrect" });
+          .json({status: false, message: "Old password is incorrect"});
       }
     }
 
@@ -625,7 +650,7 @@ const changePPassword = async (req, res, next) => {
     });
   } catch (error) {
     console.error("Error updating user details:", error); // Log error
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -656,7 +681,7 @@ const verifyPPassword = async (req, res, next) => {
       if (!PPasswordMatch) {
         return res
           .status(400)
-          .json({ status: false, message: "Password is incorrect" });
+          .json({status: false, message: "Password is incorrect"});
       }
     }
     res.status(200).json({
@@ -665,20 +690,20 @@ const verifyPPassword = async (req, res, next) => {
     });
   } catch (error) {
     console.error("Error unlock privacy:", error); // Log error
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
 //date filtering
 const allguestswithdatefiltering = async (req, res, next) => {
   try {
-    let { from, to } = req.body;
+    let {from, to} = req.body;
     from = new Date(from);
     to = new Date(to);
     const count = await prisma.guestmaster.count();
 
     if (count === 0) {
-      return res.status(404).json({ status: false, message: "Data not found" });
+      return res.status(404).json({status: false, message: "Data not found"});
     } else {
       const result = await prisma.guestmaster.findMany({
         where: {
@@ -732,7 +757,7 @@ const allguestswithdatefiltering = async (req, res, next) => {
     }
   } catch (error) {
     logger.error(error);
-    return res.status(500).json({ status: false, message: error.message });
+    return res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -747,14 +772,14 @@ const editInvoiceStampAndSignImages = async (req, res, next) => {
     const data = req.body;
 
     // Initialize the updateData object with the data from req.body
-    let updateData = { ...data };
+    let updateData = {...data};
     if (req?.files) {
       // Delete old image if exists
       const currentGuest = await prisma.guestmaster.findUnique({
-        where: { id: +userId },
+        where: {id: +userId},
       });
 
-      if(req?.files?.stamp_image?.[0]){
+      if (req?.files?.stamp_image?.[0]) {
         if (currentGuest?.stamp_image) {
           const imagePath = path.resolve(
             __dirname,
@@ -767,10 +792,10 @@ const editInvoiceStampAndSignImages = async (req, res, next) => {
             fs.unlinkSync(imagePath);
           }
         }
-        updateData.stamp_image = req?.files?.stamp_image?.[0]?.filename; 
+        updateData.stamp_image = req?.files?.stamp_image?.[0]?.filename;
       }
 
-      if(req?.files?.sign_image?.[0]){
+      if (req?.files?.sign_image?.[0]) {
         if (currentGuest?.sign_image) {
           const imagePath = path.resolve(
             __dirname,
@@ -783,20 +808,20 @@ const editInvoiceStampAndSignImages = async (req, res, next) => {
             fs.unlinkSync(imagePath);
           }
         }
-        updateData.sign_image = req?.files?.sign_image?.[0]?.filename; 
+        updateData.sign_image = req?.files?.sign_image?.[0]?.filename;
       }
     } else {
-      if (updateData?.stamp_image){
+      if (updateData?.stamp_image) {
         delete updateData?.stamp_image;
       }
-      if (updateData?.stamp_image){
+      if (updateData?.stamp_image) {
         delete updateData?.sign_image;
       }
     }
 
     const result = await prisma.guestmaster.update({
       data: updateData,
-      where: { id: +userId },
+      where: {id: +userId},
       select: {
         id: true,
         image: true,
@@ -804,7 +829,7 @@ const editInvoiceStampAndSignImages = async (req, res, next) => {
         default_checkout: true,
         fullname: true,
       },
-    }); 
+    });
 
     res.status(200).json({
       status: true,
@@ -813,7 +838,7 @@ const editInvoiceStampAndSignImages = async (req, res, next) => {
     });
   } catch (error) {
     logger.error(error);
-    return res.status(500).json({ status: false, message: error.message });
+    return res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -831,5 +856,5 @@ module.exports = {
   verifyPPassword,
   viewguests,
   allguestswithdatefiltering,
-  editInvoiceStampAndSignImages
+  editInvoiceStampAndSignImages,
 };
