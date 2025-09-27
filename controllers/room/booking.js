@@ -1,13 +1,13 @@
-const { prisma } = require("../../models/connection");
+const {prisma} = require("../../models/connection");
 const logger = require("../../utils/logger");
 const multer = require("multer");
 const fs = require("fs");
 const path = require("path");
 const xlsx = require("xlsx");
 const NodeCache = require("node-cache");
-const { default: id } = require("date-and-time/locale/id");
-const { exist } = require("joi");
-const { error } = require("winston");
+const {default: id} = require("date-and-time/locale/id");
+const {exist} = require("joi");
+const {error} = require("winston");
 const myCache = new NodeCache();
 const imagePath = "https://api.hotel.msquaretec.com";
 
@@ -16,11 +16,11 @@ const getAllBookingRoom = async (req, res, next) => {
     const count = await prisma.reservationmaster.count();
 
     if (count === 0) {
-      return res.status(404).json({ status: false, message: "data not found" });
+      return res.status(404).json({status: false, message: "data not found"});
     }
 
     const result = await prisma.reservationmaster.findMany({
-      orderBy: { id: "desc" },
+      orderBy: {id: "desc"},
       include: {
         roommaster: {
           select: {
@@ -101,13 +101,13 @@ const getAllBookingRoom = async (req, res, next) => {
     });
   } catch (error) {
     logger.error(error);
-    return res.status(500).json({ status: false, message: error.message });
+    return res.status(500).json({status: false, message: error.message});
   }
 };
 
 const getAllBookingRoomWithDate = async (req, res, next) => {
   try {
-    const { from, to, criteria, roomId } = req.body;
+    const {from, to, criteria, roomId} = req.body;
 
     const filters = [];
 
@@ -229,17 +229,17 @@ const getAllBookingRoomWithDate = async (req, res, next) => {
         ...i?.company_master,
       }));
       item.guests = [item.guestmaster, ...item.guests];
-      item.mainGuest = { ...item.guestmaster };
+      item.mainGuest = {...item.guestmaster};
       delete item.guestmaster;
       delete item.user_reservation_master;
     });
 
     res
       .status(200)
-      .json({ status: true, message: "Data fetched successfully", result });
+      .json({status: true, message: "Data fetched successfully", result});
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -249,7 +249,7 @@ const getAllBookingRoomByRoomId = async (req, res, next) => {
     const id = +(await req.params.id);
 
     if (count === 0) {
-      return res.status(404).json({ status: false, message: "data not found" });
+      return res.status(404).json({status: false, message: "data not found"});
     }
 
     const result = await prisma.reservationmaster.findMany({
@@ -339,7 +339,7 @@ const getAllBookingRoomByRoomId = async (req, res, next) => {
     });
   } catch (error) {
     logger.error(error);
-    return res.status(500).json({ status: false, message: error.message });
+    return res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -353,7 +353,7 @@ const getBookingRoom = async (req, res, next) => {
       },
     });
     if (count === 0) {
-      res.status(404).json({ status: false, message: "data not found" });
+      res.status(404).json({status: false, message: "data not found"});
     } else {
       const result = await prisma.reservationmaster.findFirst({
         where: {
@@ -365,11 +365,11 @@ const getBookingRoom = async (req, res, next) => {
       });
       res
         .status(200)
-        .json({ status: true, message: "data fetched successfully", result });
+        .json({status: true, message: "data fetched successfully", result});
     }
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -409,14 +409,14 @@ const bookRoom = async (req, res) => {
     // Function to create or retrieve company
     const getOrCreateCompany = async (company_name, company_gst) => {
       let existingCompany = await prisma.company_master.findFirst({
-        where: { company_name, company_gst },
-        select: { id: true },
+        where: {company_name, company_gst},
+        select: {id: true},
       });
 
       if (!existingCompany) {
         existingCompany = await prisma.company_master.create({
-          data: { company_name, company_gst },
-          select: { id: true },
+          data: {company_name, company_gst},
+          select: {id: true},
         });
       }
 
@@ -437,8 +437,8 @@ const bookRoom = async (req, res) => {
 
       // Fetch existing document images
       const existingGuest = await prisma.guestmaster.findUnique({
-        where: { id: +userId },
-        select: { document_images: true },
+        where: {id: +userId},
+        select: {document_images: true},
       });
 
       // Combine existing images with new images
@@ -450,12 +450,27 @@ const bookRoom = async (req, res) => {
 
       // Update guest details if document and/or document images are provided
       await prisma.guestmaster.update({
-        where: { id: userId },
+        where: {id: userId},
         data: {
           document: mainPerson.document || existingGuest.document, // Update document if provided
           document_images: allImages.join(","),
         },
       });
+      // if (existingGuest) {
+      //   const existingImages = existingGuest.document_images
+      //     ? existingGuest.document_images.split(",")
+      //     : [];
+      //   const newImages = mainPerson.document_images || [];
+      //   const allImages = existingImages.concat(newImages);
+
+      //   await prisma.guestmaster.update({
+      //     where: {id: userId},
+      //     data: {
+      //       document: mainPerson.document || existingGuest.document,
+      //       document_images: allImages.join(","),
+      //     },
+      //   });
+      // }
     } else {
       const guestData = {
         role_id: 2,
@@ -471,7 +486,7 @@ const bookRoom = async (req, res) => {
 
       const guest = await prisma.guestmaster.create({
         data: guestData,
-        select: { id: true },
+        select: {id: true},
       });
       userId = guest.id;
     }
@@ -545,7 +560,7 @@ const bookRoom = async (req, res) => {
           nationality: person.nationality,
           gender: person.gender,
         },
-        select: { id: true },
+        select: {id: true},
       });
 
       await prisma.user_reservation_master.create({
@@ -580,7 +595,7 @@ const bookRoom = async (req, res) => {
     });
   } catch (error) {
     console.error("Error: ", error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -602,9 +617,7 @@ const editBookingRoom = async (req, res, next) => {
     data.discount = parseFloat(data.discount);
     data.perdayprice = parseFloat(data.perdayprice);
 
-    data.gst_status = [true, "true"].includes(data.gst_status)
-      ? true
-      : false;
+    data.gst_status = [true, "true"].includes(data.gst_status) ? true : false;
 
     // data.after_discount_price = parseFloat(data.after_discount_price);
 
@@ -632,7 +645,7 @@ const editBookingRoom = async (req, res, next) => {
     ) {
       return res
         .status(400)
-        .json({ status: false, message: "Invalid date provided." });
+        .json({status: false, message: "Invalid date provided."});
     }
 
     // Update reservation
@@ -654,7 +667,7 @@ const editBookingRoom = async (req, res, next) => {
     });
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -671,10 +684,10 @@ const deleteBookingRoom = async (req, res, next) => {
     });
     res
       .status(200)
-      .json({ status: true, message: "booking deleted successfully", result });
+      .json({status: true, message: "booking deleted successfully", result});
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -705,7 +718,7 @@ const cancelRoom = async (req, res, next) => {
     });
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -766,7 +779,7 @@ const paymentstatus = async (req, res, next) => {
     });
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -781,12 +794,12 @@ const addbookingbyexcel = async (req, res) => {
     }
 
     // Read the uploaded Excel file
-    const workbook = xlsx.read(req.file.buffer, { type: "buffer" });
+    const workbook = xlsx.read(req.file.buffer, {type: "buffer"});
     const sheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[sheetName];
 
     // Convert the worksheet to JSON
-    const data = xlsx.utils.sheet_to_json(worksheet, { raw: false });
+    const data = xlsx.utils.sheet_to_json(worksheet, {raw: false});
 
     // Assuming each row in the Excel file represents one booking, extract the relevant data
     const bookings = data.map((row) => {
@@ -842,11 +855,11 @@ const addbookingbyexcel = async (req, res) => {
 
     // Iterate over each booking in the JSON data and insert into the database
     for (const bookingData of bookings) {
-      let { persons, ...bookingDetails } = bookingData;
+      let {persons, ...bookingDetails} = bookingData;
 
       const lastInvoice = await prisma.reservationmaster.findFirst({
-        select: { invoice_num: true },
-        orderBy: { id: "desc" },
+        select: {invoice_num: true},
+        orderBy: {id: "desc"},
       });
 
       let nextInvoiceNum = lastInvoice ? lastInvoice.invoice_num + 1 : 1;
@@ -859,14 +872,14 @@ const addbookingbyexcel = async (req, res) => {
 
       const getOrCreateCompany = async (company_name, company_gst) => {
         let existingCompany = await prisma.company_master.findFirst({
-          where: { company_name, company_gst },
-          select: { id: true },
+          where: {company_name, company_gst},
+          select: {id: true},
         });
 
         if (!existingCompany) {
           existingCompany = await prisma.company_master.create({
-            data: { company_name, company_gst },
-            select: { id: true },
+            data: {company_name, company_gst},
+            select: {id: true},
           });
         }
 
@@ -884,8 +897,8 @@ const addbookingbyexcel = async (req, res) => {
         userId = +mainPerson.user_id;
 
         const existingGuest = await prisma.guestmaster.findUnique({
-          where: { id: +userId },
-          select: { document_images: true },
+          where: {id: +userId},
+          select: {document_images: true},
         });
 
         const existingImages = existingGuest.document_images
@@ -895,7 +908,7 @@ const addbookingbyexcel = async (req, res) => {
         const allImages = existingImages.concat(newImages);
 
         await prisma.guestmaster.update({
-          where: { id: userId },
+          where: {id: userId},
           data: {
             document: mainPerson.document || existingGuest.document,
             document_images: allImages.join(","),
@@ -916,7 +929,7 @@ const addbookingbyexcel = async (req, res) => {
 
         const guest = await prisma.guestmaster.create({
           data: guestData,
-          select: { id: true },
+          select: {id: true},
         });
         userId = guest.id;
       }
@@ -965,7 +978,7 @@ const addbookingbyexcel = async (req, res) => {
             nationality: person.nationality,
             gender: person.gender,
           },
-          select: { id: true },
+          select: {id: true},
         });
 
         await prisma.user_reservation_master.create({
@@ -988,7 +1001,7 @@ const addbookingbyexcel = async (req, res) => {
     });
   } catch (error) {
     console.error("Error: ", error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -1017,9 +1030,7 @@ const editbilling = async (req, res, next) => {
     data.discount = parseFloat(data.discount);
     data.perdayprice = parseFloat(data.perdayprice);
 
-    data.gst_status = [true, "true"].includes(data.gst_status)
-    ? true
-    : false;
+    data.gst_status = [true, "true"].includes(data.gst_status) ? true : false;
     // data.after_discount_price = parseFloat(data.after_discount_price);
 
     const convertToDate = (dateString) => {
@@ -1044,7 +1055,7 @@ const editbilling = async (req, res, next) => {
     ) {
       return res
         .status(400)
-        .json({ status: false, message: "Invalid date provided." });
+        .json({status: false, message: "Invalid date provided."});
     }
 
     const billedit = await prisma.billingmaster.update({
@@ -1088,8 +1099,8 @@ const editbilling = async (req, res, next) => {
     });
 
     let existingCompany = await prisma.company_master.findFirst({
-      where: { company_gst },
-      select: { id: true },
+      where: {company_gst},
+      select: {id: true},
     });
 
     if (company_gst && company_name) {
@@ -1154,7 +1165,7 @@ const editbilling = async (req, res, next) => {
   } catch (error) {
     console.error("Error: ", error);
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 //
@@ -1179,7 +1190,7 @@ const lastInvoicenum = async (req, res, next) => {
     });
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 

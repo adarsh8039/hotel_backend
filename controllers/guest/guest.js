@@ -137,7 +137,7 @@ const allguests = async (req, res, next) => {
       return res.status(200).json({
         status: true,
         message: "Data fetched successfully",
-        formattedResult,
+        result: formattedResult,
       });
     }
   } catch (error) {
@@ -201,10 +201,36 @@ const speceficguest = async (req, res, next) => {
         where: {
           id,
         },
+        include: {
+          reservationmaster: {
+            where: {
+              status: {
+                not: "BOOKED",
+              },
+            },
+            select: {
+              id: true,
+              check_in: true,
+              check_out: true,
+            },
+          },
+          user: {
+            select: {
+              id: true,
+              fullname: true,
+              email: true,
+            },
+          },
+        },
         orderBy: {
           id: "asc",
         },
       });
+
+      if (result && result.user) {
+        result.created_by = result.user;
+        delete result.user;
+      }
 
       result.document_images = result.document_images
         ? result.document_images.split(",")

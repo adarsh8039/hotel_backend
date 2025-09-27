@@ -23,7 +23,7 @@ model users {
   rolemaster   rolemaster   @relation(fields: [role_id], references: [id], onUpdate: Restrict)
 
   // Relations for standard user usage
-  reservations     reservationmaster[]   @relation("UserReservations")
+  // reservations     reservationmaster[]   @relation("UserReservations")
   billings         billingmaster[]
   logs             logmaster[]
 
@@ -107,7 +107,7 @@ model reservationmaster {
   billingmaster           billingmaster[]
   roommaster              roommaster?              @relation(fields: [room_id], references: [id], onUpdate: Restrict, map: "reservationmaster_room_id_fkey")
   guestmaster             guestmaster?             @relation(fields: [user_id], references: [id], onUpdate: Restrict, map: "reservationmaster_guest_id_fkey")
-  users                   users?                   @relation("UserReservations", fields: [user_id], references: [id], onUpdate: Restrict, map: "reservationmaster_user_id_fkey")
+  // users                   users?                   @relation("UserReservations", fields: [user_id], references: [id], onUpdate: Restrict, map: "reservationmaster_user_id_fkey")
   roomservicemaster       roomservicemaster[]
   user_reservation_master user_reservation_master[]
   vendor                   users?                @relation("ReservationVendor", fields: [vendor_user_id], references: [id], onUpdate: Restrict, map: "reservationmaster_vendor_user_id_fkey")

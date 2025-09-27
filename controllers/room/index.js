@@ -1,6 +1,6 @@
-const { prisma } = require("../../models/connection");
+const {prisma} = require("../../models/connection");
 const logger = require("../../utils/logger");
-const { convertToIndianStandard } = require("../../utils/dateFormatter");
+const {convertToIndianStandard} = require("../../utils/dateFormatter");
 const imagePath = "https://api.hotel.msquaretec.com";
 const fs = require("fs");
 const path = require("path");
@@ -18,6 +18,7 @@ const addrooms = async (req, res, next) => {
     }
 
     const data = req.body;
+    const {userDetails} = req.headers;
 
     const room = await prisma.roommaster.create({
       data: {
@@ -30,6 +31,7 @@ const addrooms = async (req, res, next) => {
         description: data.description,
         tax_type: data.tax_type,
         room_size: data.room_size,
+        user_id: userDetails.id,
       },
       select: {
         id: true,
@@ -38,10 +40,10 @@ const addrooms = async (req, res, next) => {
 
     res
       .status(200)
-      .json({ status: true, message: "Room inserted successfully!", room });
+      .json({status: true, message: "Room inserted successfully!", room});
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -66,22 +68,22 @@ const changeRoomDisabled = async (req, res, next) => {
     if (result?.disabled) {
       res
         .status(200)
-        .json({ status: true, message: "Room has been disabled!", result });
+        .json({status: true, message: "Room has been disabled!", result});
     } else {
       res
         .status(200)
-        .json({ status: true, message: "Room has been enabled!", result });
+        .json({status: true, message: "Room has been enabled!", result});
     }
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
 // view rooms
 const allrooms = async (req, res, next) => {
   try {
-    let { check_in, check_out } = req.body;
+    let {check_in, check_out} = req.body;
 
     // Convert input times to UTC
     check_in = new Date(check_in).toISOString();
@@ -94,7 +96,7 @@ const allrooms = async (req, res, next) => {
     });
 
     if (rooms.length === 0) {
-      return res.status(404).json({ status: false, message: "data not found" });
+      return res.status(404).json({status: false, message: "data not found"});
     }
 
     let reservations = await prisma.reservationmaster.findMany({
@@ -142,6 +144,7 @@ const allrooms = async (req, res, next) => {
         gst_status: true,
         perdayprice: true,
         guestmaster: true,
+        vendor: true,
       },
     });
 
@@ -169,10 +172,10 @@ const allrooms = async (req, res, next) => {
 
     res
       .status(200)
-      .json({ status: true, message: "data fetched successfully", rooms });
+      .json({status: true, message: "data fetched successfully", rooms});
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -181,7 +184,7 @@ const extendcheckout = async (req, res, next) => {
   try {
     let reservationId = +(await req.params.id);
     let roomId = +(await req.params.roomid);
-    let { check_in, check_out } = req.body;
+    let {check_in, check_out} = req.body;
 
     // Convert input times to UTC
     check_in = new Date(check_in).toISOString();
@@ -190,7 +193,7 @@ const extendcheckout = async (req, res, next) => {
     const count = await prisma.reservationmaster.count();
 
     if (count === 0) {
-      return res.status(200).json({ status: true, message: "Data not found" });
+      return res.status(200).json({status: true, message: "Data not found"});
     }
 
     const result = await prisma.reservationmaster.findMany({
@@ -235,7 +238,7 @@ const extendcheckout = async (req, res, next) => {
     }
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -243,7 +246,7 @@ const extendcheckout = async (req, res, next) => {
 const availablerooms = async (req, res, next) => {
   try {
     let roomId = +(await req.params.roomid);
-    let { check_in, check_out } = req.body;
+    let {check_in, check_out} = req.body;
 
     // Convert input times to UTC
     check_in = new Date(check_in).toISOString();
@@ -252,7 +255,7 @@ const availablerooms = async (req, res, next) => {
     const count = await prisma.reservationmaster.count();
 
     if (count === 0) {
-      return res.status(200).json({ status: true, message: "Data not found" });
+      return res.status(200).json({status: true, message: "Data not found"});
     }
 
     const result = await prisma.reservationmaster.findMany({
@@ -294,7 +297,7 @@ const availablerooms = async (req, res, next) => {
     }
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -309,7 +312,7 @@ const speceficroom = async (req, res, next) => {
       },
     });
     if (count === 0) {
-      res.status(404).json({ status: false, message: "data not found" });
+      res.status(404).json({status: false, message: "data not found"});
     } else {
       const result = await prisma.roommaster.findFirst({
         where: {
@@ -322,17 +325,17 @@ const speceficroom = async (req, res, next) => {
 
       res
         .status(200)
-        .json({ status: true, message: "data fetched successfully", result });
+        .json({status: true, message: "data fetched successfully", result});
     }
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
 const editroom = async (req, res, next) => {
   try {
-    const { id } = req.params;
+    const {id} = req.params;
     const data = req.body;
     let updateData = {
       ...data,
@@ -341,7 +344,7 @@ const editroom = async (req, res, next) => {
 
     // Fetch the current room's images
     const currentRoom = await prisma.roommaster.findUnique({
-      where: { id: +id },
+      where: {id: +id},
     });
     // Handle existing images from the database
     let currentImages = currentRoom.images ? currentRoom.images.split(",") : [];
@@ -396,7 +399,7 @@ const editroom = async (req, res, next) => {
 
     // Update the room details
     const result = await prisma.roommaster.update({
-      where: { id: +id },
+      where: {id: +id},
       data: updateData,
     });
     res.status(200).json({
@@ -405,7 +408,7 @@ const editroom = async (req, res, next) => {
     });
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -423,10 +426,10 @@ const deleteroom = async (req, res, next) => {
     });
     res
       .status(200)
-      .json({ status: true, message: "room deleted successfully", result });
+      .json({status: true, message: "room deleted successfully", result});
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -468,7 +471,7 @@ const getBookedRoomsForService = async (req, res, next) => {
 
     //FILTERING ONLY UNIQUE OBJECTS BY ID
     result = result.map((item) => {
-      return { ...item.roommaster };
+      return {...item.roommaster};
     });
     result = Array.from(
       new Map(result.map((item) => [item.id, item])).values()
@@ -476,10 +479,10 @@ const getBookedRoomsForService = async (req, res, next) => {
 
     res
       .status(200)
-      .json({ status: true, message: "data fetched successfully", result });
+      .json({status: true, message: "data fetched successfully", result});
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -489,7 +492,7 @@ const canceledrooms = async (req, res, next) => {
     const count = await prisma.roommaster.count();
 
     if (count === 0) {
-      res.status(404).json({ status: false, message: "data not found" });
+      res.status(404).json({status: false, message: "data not found"});
     } else {
       const result = await prisma.roommaster.findMany({
         where: {
@@ -501,11 +504,11 @@ const canceledrooms = async (req, res, next) => {
       });
       res
         .status(200)
-        .json({ status: true, message: "data fetched successfully", result });
+        .json({status: true, message: "data fetched successfully", result});
     }
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -543,7 +546,7 @@ const checkRoomNoExists = async (req, res, next) => {
     }
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -559,12 +562,12 @@ const addroombyexcel = async (req, res) => {
     }
 
     // Read the uploaded Excel file
-    const workbook = xlsx.read(req.file.buffer, { type: "buffer" });
+    const workbook = xlsx.read(req.file.buffer, {type: "buffer"});
     const sheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[sheetName];
 
     // Convert the worksheet to JSON
-    const data = xlsx.utils.sheet_to_json(worksheet, { raw: false });
+    const data = xlsx.utils.sheet_to_json(worksheet, {raw: false});
 
     // Iterate over each row in the JSON data and insert into the database
     const promises = data.map(async (item) => {
@@ -612,7 +615,7 @@ const addroombyexcel = async (req, res) => {
     });
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
