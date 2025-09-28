@@ -12,7 +12,7 @@ const addVendor = async (req, res) => {
       },
     });
     if (isExists) {
-      res
+      return res
         .status(422)
         .json({status: false, message: "User already exists with this email."});
     }
