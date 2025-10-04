@@ -13,13 +13,17 @@ const imagePath = "https://api.hotel.msquaretec.com";
 
 const getAllBookingRoom = async (req, res, next) => {
   try {
-    const count = await prisma.reservationmaster.count();
+    const {userDetails} = req.headers;
+    const count = await prisma.reservationmaster.count({
+      where: {vendor_user_id: userDetails.id},
+    });
 
     if (count === 0) {
       return res.status(404).json({status: false, message: "data not found"});
     }
 
     const result = await prisma.reservationmaster.findMany({
+      where: {vendor_user_id: userDetails.id},
       orderBy: {id: "desc"},
       include: {
         roommaster: {
@@ -108,6 +112,7 @@ const getAllBookingRoom = async (req, res, next) => {
 const getAllBookingRoomWithDate = async (req, res, next) => {
   try {
     const {from, to, criteria, roomId} = req.body;
+    const {userDetails} = req.headers;
 
     const filters = [];
 
@@ -164,6 +169,7 @@ const getAllBookingRoomWithDate = async (req, res, next) => {
 
     const result = await prisma.reservationmaster.findMany({
       where: {
+        vendor_user_id: userDetails.id,
         AND: filters,
       },
       orderBy: {

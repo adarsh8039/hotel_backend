@@ -32,6 +32,10 @@ model users {
   vendorRooms         roommaster[]         @relation("UserRoommaster")
   vendorReservations  reservationmaster[]  @relation("ReservationVendor")
   roomServices        roomservicemaster[]  @relation("UserRoomService")
+  expenses_master             expenses_master[]             // New back-relation
+  fooditemmaster              fooditemmaster[]              // New back-relation
+  room_service_item_master    room_service_item_master[]    // New back-relation
+  user_reservation_master     user_reservation_master[]     // New back-relation
 }
 
 model guestmaster {
@@ -185,6 +189,11 @@ model fooditemmaster {
   created_at               DateTime                   @default(now()) @db.Timestamp(0)
   updated_at               DateTime                  @default(now()) @db.Timestamp(0)
   status                   Boolean?                   @default(true)
+  user_id                 Int?                      // New Field
+
+  user                    users?                    @relation(fields: [user_id], references: [id], onUpdate: Restrict)
+
+  @@index([user_id])
 
   room_service_item_master room_service_item_master[]
 }
@@ -202,12 +211,16 @@ model room_service_item_master {
   created_at        DateTime           @default(now()) @db.Timestamp(0)
   updated_at        DateTime           @default(now()) @db.Timestamp(0)
   discount          Int?
+   user_id         Int?              // New Field
 
   fooditemmaster     fooditemmaster?    @relation(fields: [item_id], references: [id], onUpdate: Restrict, map: "room_service_item_master_ibfk_1")
   roomservicemaster  roomservicemaster? @relation(fields: [service_id], references: [id], onUpdate: Restrict, map: "room_service_item_master_ibfk_2")
+  user            users?            @relation(fields: [user_id], references: [id], onUpdate: Restrict)
+
 
   @@index([item_id], map: "room_service_item_master_item_id_idx")
   @@index([service_id], map: "room_service_item_master_service_id_idx")
+  @@index([user_id])
 }
 
 model expenses_master {
@@ -218,6 +231,11 @@ model expenses_master {
   created_at  DateTime @default(now()) @db.Timestamp(0)
   updated_at  DateTime @default(now()) @db.Timestamp(0)
   status      Boolean? @default(true)
+  user_id     Int?     // New Field
+
+  user        users?   @relation(fields: [user_id], references: [id], onUpdate: Restrict)
+
+  @@index([user_id])
 }
 
 model user_reservation_master {
@@ -231,15 +249,19 @@ model user_reservation_master {
   purpose_of_visit  String?           @db.VarChar(255)
   created_at        DateTime          @default(now()) @db.Timestamp(0)
   updated_at        DateTime          @default(now()) @db.Timestamp(0)
+  user_id            Int?             // New Field
 
   reservationmaster reservationmaster @relation(fields: [reservation_id], references: [id], onUpdate: Restrict, map: "user_reservation_master_ibfk_2")
   guestmaster        guestmaster      @relation(fields: [guest_id], references: [id], onUpdate: Restrict, map: "user_reservation_master_ibfk_1")
   company_master     company_master?  @relation(fields: [company_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "user_reservation_master_ibfk_3")
+  user               users?            @relation(fields: [user_id], references: [id], onUpdate: Restrict)
+
 
   @@unique([reservation_id, guest_id], map: "res_guest_unique_id")
   @@index([reservation_id], map: "user_reservation_master_reservation_id_idx")
   @@index([guest_id], map: "user_reservation_master_guest_id_idx")
   @@index([company_id], map: "user_reservation_master_company_id_idx")
+  @@index([user_id])
 }
 
 model company_master {

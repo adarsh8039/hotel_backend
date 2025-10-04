@@ -78,13 +78,19 @@ const addguest = async (req, res, next) => {
 // view enable guests
 const allguests = async (req, res, next) => {
   try {
-    const count = await prisma.guestmaster.count();
+    const {userDetails} = req.headers;
+
+    const count = await prisma.guestmaster.count({
+      where: {user_id: userDetails.id},
+    });
+    console.log(count);
 
     if (count === 0) {
       return res.status(404).json({status: false, message: "Data not found"});
     } else {
       const result = await prisma.guestmaster.findMany({
         where: {
+          user_id: userDetails.id,
           NOT: [
             {
               role_id: 1,
@@ -189,9 +195,11 @@ const viewguests = async (req, res, next) => {
 const speceficguest = async (req, res, next) => {
   try {
     const id = +(await req.params.id);
+    const {userDetails} = req.headers;
     const count = await prisma.guestmaster.count({
       where: {
         id,
+        user_id: userDetails.id,
       },
     });
     if (count === 0) {
@@ -401,6 +409,7 @@ const editprofile = async (req, res, next) => {
 const disableguest = async (req, res, next) => {
   try {
     const id = +(await req.params.id);
+    const {userDetails} = req.headers;
 
     const currentGuest = await prisma.guestmaster.findUnique({
       where: {

@@ -1,20 +1,22 @@
-const { exist } = require("joi");
-const { prisma } = require("../../models/connection");
+const {exist} = require("joi");
+const {prisma} = require("../../models/connection");
 const imagePath = "https://api.hotel.msquaretec.com";
 const fs = require("fs");
 const path = require("path");
-const express = require('express');
-const multer = require('multer');
-const xlsx = require('xlsx');
+const express = require("express");
+const multer = require("multer");
+const xlsx = require("xlsx");
 const logger = require("../../utils/logger");
 const NodeCache = require("node-cache");
-const myCache = new NodeCache(); 
+const myCache = new NodeCache();
 
 //add food item
 const addfooditem = async (req, res, next) => {
   try {
+    const {userDetails} = req.headers;
     data = await req.body;
     data.price = +data.price;
+    data.user_id = userDetails.id;
     const room = await prisma.fooditemmaster.create({
       data: {
         ...data,
@@ -29,37 +31,40 @@ const addfooditem = async (req, res, next) => {
     });
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
 // view fooditems
 const allfooditems = async (req, res, next) => {
   try {
- 
-    const count = await prisma.fooditemmaster.count();
+    const {userDetails} = req.headers;
+    const count = await prisma.fooditemmaster.count({
+      where: {user_id: userDetails.id},
+    });
 
     if (count === 0) {
-      res.status(404).json({ status: false, message: "data not found" });
+      res.status(404).json({status: false, message: "data not found"});
     } else {
       const result = await prisma.fooditemmaster.findMany({
         orderBy: {
           item_name: "asc",
         },
-        where:{
-          NOT:{
+        where: {
+          user_id: userDetails.id,
+          NOT: {
             status: false,
           },
         },
       });
-    
+
       res
         .status(200)
-        .json({ status: true, message: "data fetched successfully", result });
+        .json({status: true, message: "data fetched successfully", result});
     }
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -73,7 +78,7 @@ const speceficfooditem = async (req, res, next) => {
       },
     });
     if (count === 0) {
-      res.status(404).json({ status: false, message: "data not found" });
+      res.status(404).json({status: false, message: "data not found"});
     } else {
       const result = await prisma.fooditemmaster.findFirst({
         where: {
@@ -85,18 +90,18 @@ const speceficfooditem = async (req, res, next) => {
       });
       res
         .status(200)
-        .json({ status: true, message: "data fetched successfully", result });
+        .json({status: true, message: "data fetched successfully", result});
     }
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
 //edit food item
 const editfooditem = async (req, res, next) => {
   try {
-    const { id } = req.params;
+    const {id} = req.params;
     const data = req.body;
     data.price = +data.price;
 
@@ -108,7 +113,9 @@ const editfooditem = async (req, res, next) => {
     });
 
     if (!currentFoodItem) {
-      return res.status(404).json({ status: false, message: "Food item not found" });
+      return res
+        .status(404)
+        .json({status: false, message: "Food item not found"});
     }
 
     // if (req.files && req.files.images && req.files.images.length > 0) {
@@ -146,11 +153,9 @@ const editfooditem = async (req, res, next) => {
     });
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
-
-
 
 //check food code exists or not
 const checkItemCodeExists = async (req, res, next) => {
@@ -187,7 +192,7 @@ const checkItemCodeExists = async (req, res, next) => {
     }
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -196,8 +201,8 @@ const disablefooditem = async (req, res, next) => {
   try {
     const id = +(await req.params.id);
     const result = await prisma.fooditemmaster.update({
-      data:{
-        status: false
+      data: {
+        status: false,
       },
       where: {
         id,
@@ -213,7 +218,7 @@ const disablefooditem = async (req, res, next) => {
     });
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -223,30 +228,30 @@ const addfooditembyexcel = async (req, res) => {
     if (!req.file) {
       return res.status(400).json({
         status: false,
-        message: 'No file uploaded',
+        message: "No file uploaded",
       });
     }
 
-    const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
+    const workbook = xlsx.read(req.file.buffer, {type: "buffer"});
     const sheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[sheetName];
-    const data = xlsx.utils.sheet_to_json(worksheet, { raw: false });
+    const data = xlsx.utils.sheet_to_json(worksheet, {raw: false});
     const foodItems = [];
     const duplicateItemCodes = [];
 
     for (const item of data) {
-    //   const categoryId = parseInt(item.category_id, 10); 
+      //   const categoryId = parseInt(item.category_id, 10);
 
-    //   const category = await prisma.food_category_master.findUnique({
-    //     where: { id: categoryId },
-    //   });
+      //   const category = await prisma.food_category_master.findUnique({
+      //     where: { id: categoryId },
+      //   });
 
-    //   if (!category) {
-    //     return res.status(400).json({
-    //       status: false,
-    //       message: `No entry found in category table for id: ${categoryId}`,
-    //     });
-    //   }
+      //   if (!category) {
+      //     return res.status(400).json({
+      //       status: false,
+      //       message: `No entry found in category table for id: ${categoryId}`,
+      //     });
+      //   }
 
       // Check if item_code already exists
       // const existingItem = await prisma.fooditemmaster.findFirst({
@@ -285,14 +290,13 @@ const addfooditembyexcel = async (req, res) => {
 
     res.status(200).json({
       status: true,
-      message: 'Food items inserted successfully!',
+      message: "Food items inserted successfully!",
     });
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
-
 
 module.exports = {
   addfooditem,
@@ -301,5 +305,5 @@ module.exports = {
   editfooditem,
   disablefooditem,
   checkItemCodeExists,
-  addfooditembyexcel
+  addfooditembyexcel,
 };

@@ -84,12 +84,16 @@ const changeRoomDisabled = async (req, res, next) => {
 const allrooms = async (req, res, next) => {
   try {
     let {check_in, check_out} = req.body;
+    const {userDetails} = req.headers;
 
     // Convert input times to UTC
     check_in = new Date(check_in).toISOString();
     check_out = new Date(check_out).toISOString();
 
     let rooms = await prisma.roommaster.findMany({
+      where: {
+        user_id: userDetails.id,
+      },
       orderBy: {
         title: "asc",
       },
