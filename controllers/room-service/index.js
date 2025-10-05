@@ -1,9 +1,9 @@
-const { prisma } = require("../../models/connection");
+const {prisma} = require("../../models/connection");
 const logger = require("../../utils/logger");
 const handleImageUpload = require("../../middlewares/upload");
-const { startOfWeek, endOfWeek } = require("date-fns");
-const { secretmanager } = require("googleapis/build/src/apis/secretmanager");
-const { default: id } = require("date-and-time/locale/id");
+const {startOfWeek, endOfWeek} = require("date-fns");
+const {secretmanager} = require("googleapis/build/src/apis/secretmanager");
+const {default: id} = require("date-and-time/locale/id");
 
 // all rooms no
 const roomnumbers = async (req, res, next) => {
@@ -47,7 +47,7 @@ const roomnumbers = async (req, res, next) => {
     logger.error(error);
     res
       .status(500)
-      .json({ status: false, message: "Internal Server Error", error });
+      .json({status: false, message: "Internal Server Error", error});
   }
 };
 
@@ -82,7 +82,7 @@ const fooditems = async (req, res, next) => {
     });
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -106,7 +106,7 @@ const foodprice = async (req, res, next) => {
     });
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -208,6 +208,7 @@ const foodprice = async (req, res, next) => {
 const roomservice = async (req, res, next) => {
   const prisma = req.app.get("prisma");
   try {
+    const {userDetails} = req.headers;
     // Parse date fields
     req.body.order_date = new Date(req.body.order_date);
     // Start a transaction
@@ -232,8 +233,8 @@ const roomservice = async (req, res, next) => {
       // Check if user_id is provided
       if (req.body.user_id) {
         guest = await tx.guestmaster.findUnique({
-          where: { id: req.body.user_id },
-          select: { id: true },
+          where: {id: req.body.user_id},
+          select: {id: true},
         });
 
         if (!guest) {
@@ -241,8 +242,9 @@ const roomservice = async (req, res, next) => {
             data: {
               fullname: req.body.fullname,
               phone_number: req.body.phone_number,
+              user_id: userDetails.id,
             },
-            select: { id: true },
+            select: {id: true},
           });
         }
       }
@@ -260,6 +262,7 @@ const roomservice = async (req, res, next) => {
           phone_number: req.body.phone_number,
           check_in: req.body.check_in,
           check_out: req.body.check_out,
+          user_id: userDetails.id,
         },
       });
 
@@ -269,8 +272,8 @@ const roomservice = async (req, res, next) => {
 
       for (let item of serviceItems) {
         let foodItem = await tx.fooditemmaster.findUnique({
-          where: { id: +item.item_id },
-          select: { id: true },
+          where: {id: +item.item_id},
+          select: {id: true},
         });
 
         if (!foodItem) {
@@ -279,7 +282,7 @@ const roomservice = async (req, res, next) => {
               item_name: item.item_name,
               price: item.price,
             },
-            select: { id: true },
+            select: {id: true},
           });
         }
 
@@ -298,7 +301,7 @@ const roomservice = async (req, res, next) => {
         data: processedItems,
       });
 
-      return { service, processedItems };
+      return {service, processedItems};
     });
 
     const myCache = req.app.get("cache");
@@ -312,14 +315,18 @@ const roomservice = async (req, res, next) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
 //view room service
 const viewroomservice = async (req, res, next) => {
   try {
+    const {userDetails} = req.headers;
     const result = await prisma.roomservicemaster.findMany({
+      where: {
+        user_id: userDetails.id,
+      },
       orderBy: {
         id: "desc",
       },
@@ -347,7 +354,7 @@ const viewroomservice = async (req, res, next) => {
     });
 
     if (result.length === 0) {
-      return res.status(404).json({ status: false, message: "data not found" });
+      return res.status(404).json({status: false, message: "data not found"});
     }
 
     result?.forEach((el) => {
@@ -368,7 +375,7 @@ const viewroomservice = async (req, res, next) => {
     });
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -376,15 +383,17 @@ const viewroomservice = async (req, res, next) => {
 const viewroomservicebyid = async (req, res, next) => {
   try {
     let service_id = +(await req.params.id);
+    const {userDetails} = req.headers;
 
     const count = await prisma.roomservicemaster.count({
       where: {
         id: service_id,
+        user_id: userDetails.id,
       },
     });
 
     if (count === 0) {
-      res.status(404).json({ status: false, message: "data not found" });
+      res.status(404).json({status: false, message: "data not found"});
     } else {
       const result = await prisma.roomservicemaster.findFirst({
         orderBy: {
@@ -429,7 +438,7 @@ const viewroomservicebyid = async (req, res, next) => {
     }
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -437,7 +446,7 @@ const viewroomservicebyid = async (req, res, next) => {
 const editroomservice = async (req, res, next) => {
   try {
     const service_id = parseInt(req.params.id, 10); // Explicitly convert to integer
-    const { service_items, order_date, ...values } = req.body;
+    const {service_items, order_date, ...values} = req.body;
 
     // Convert order_date to a Date object
     const formattedOrderDate = new Date(order_date);
@@ -445,7 +454,7 @@ const editroomservice = async (req, res, next) => {
     // Update or create service items
     await Promise.all(
       service_items.map(async (item) => {
-        let { id, item_id, item_name, price, ...itemData } = item;
+        let {id, item_id, item_name, price, ...itemData} = item;
 
         // If no item_id exists, create a new entry in fooditemmaster
         if (!item_id) {
@@ -454,7 +463,7 @@ const editroomservice = async (req, res, next) => {
               item_name, // Use item_name from service_items
               price, // Use price from service_items
             },
-            select: { id: true },
+            select: {id: true},
           });
           item_id = newItem.id; // Assign the new item_id
         }
@@ -486,7 +495,7 @@ const editroomservice = async (req, res, next) => {
               igst: itemData.igst,
               total: parseFloat(itemData.total),
             },
-            where: { id: parseInt(id, 10) },
+            where: {id: parseInt(id, 10)},
           });
         }
       })
@@ -498,8 +507,8 @@ const editroomservice = async (req, res, next) => {
         ...values,
         order_date: formattedOrderDate,
       },
-      where: { id: service_id },
-      select: { id: true },
+      where: {id: service_id},
+      select: {id: true},
     });
 
     const myCache = req.app.get("cache");
@@ -557,7 +566,7 @@ const editRoomServiceStatusPaid = async (req, res, next) => {
     });
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -610,7 +619,7 @@ const deleteroomservice = async (req, res, next) => {
     });
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -633,7 +642,7 @@ const previousdayroomservices = async (req, res, next) => {
     });
 
     if (count === 0) {
-      res.status(404).json({ status: false, message: "data not found" });
+      res.status(404).json({status: false, message: "data not found"});
     } else {
       const result = await prisma.roomservicemaster.findMany({
         where: {
@@ -693,8 +702,8 @@ const previousdayroomservices = async (req, res, next) => {
         item.fullname = item?.reservationmaster?.guestmaster?.fullname;
         item.phone_number = item?.reservationmaster?.guestmaster?.phone_number;
         item.room_service_items = item?.room_service_item_master?.map((ele) => {
-          let { fooditemmaster, ...val } = ele;
-          return { ...val, ...fooditemmaster };
+          let {fooditemmaster, ...val} = ele;
+          return {...val, ...fooditemmaster};
         });
         delete item.reservationmaster;
         delete item.room_service_item_master;
@@ -734,7 +743,7 @@ const previousdayroomservices = async (req, res, next) => {
     }
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -755,7 +764,7 @@ const monthlyroomservice = async (req, res, next) => {
     });
 
     if (count === 0) {
-      res.status(404).json({ status: false, message: "Data not found" });
+      res.status(404).json({status: false, message: "Data not found"});
     } else {
       const result = await prisma.roomservicemaster.findMany({
         where: {
@@ -815,8 +824,8 @@ const monthlyroomservice = async (req, res, next) => {
         item.fullname = item?.reservationmaster?.guestmaster?.fullname;
         item.phone_number = item?.reservationmaster?.guestmaster?.phone_number;
         item.room_service_items = item?.room_service_item_master?.map((ele) => {
-          let { fooditemmaster, ...val } = ele;
-          return { ...val, ...fooditemmaster };
+          let {fooditemmaster, ...val} = ele;
+          return {...val, ...fooditemmaster};
         });
         delete item.reservationmaster;
         delete item.room_service_item_master;
@@ -865,7 +874,7 @@ const monthlyroomservice = async (req, res, next) => {
     }
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -873,8 +882,8 @@ const monthlyroomservice = async (req, res, next) => {
 const weeklyroomservice = async (req, res, next) => {
   try {
     const now = new Date();
-    const start = startOfWeek(now, { weekStartsOn: 1 }); // Assuming the week starts on Monday
-    const end = endOfWeek(now, { weekStartsOn: 1 });
+    const start = startOfWeek(now, {weekStartsOn: 1}); // Assuming the week starts on Monday
+    const end = endOfWeek(now, {weekStartsOn: 1});
 
     const count = await prisma.roomservicemaster.count({
       where: {
@@ -886,7 +895,7 @@ const weeklyroomservice = async (req, res, next) => {
     });
 
     if (count === 0) {
-      res.status(404).json({ status: false, message: "data not found" });
+      res.status(404).json({status: false, message: "data not found"});
     } else {
       const result = await prisma.roomservicemaster.findMany({
         where: {
@@ -946,8 +955,8 @@ const weeklyroomservice = async (req, res, next) => {
         item.fullname = item?.reservationmaster?.guestmaster?.fullname;
         item.phone_number = item?.reservationmaster?.guestmaster?.phone_number;
         item.room_service_items = item?.room_service_item_master?.map((ele) => {
-          let { fooditemmaster, ...val } = ele;
-          return { ...val, ...fooditemmaster };
+          let {fooditemmaster, ...val} = ele;
+          return {...val, ...fooditemmaster};
         });
         delete item.reservationmaster;
         delete item.room_service_item_master;
@@ -1000,7 +1009,7 @@ const weeklyroomservice = async (req, res, next) => {
     }
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -1029,7 +1038,7 @@ const currentdayroomservice = async (req, res, next) => {
     });
 
     if (count === 0) {
-      res.status(404).json({ status: false, message: "data not found" });
+      res.status(404).json({status: false, message: "data not found"});
     } else {
       const result = await prisma.roomservicemaster.findMany({
         where: {
@@ -1089,8 +1098,8 @@ const currentdayroomservice = async (req, res, next) => {
         item.fullname = item?.reservationmaster?.guestmaster?.fullname;
         item.phone_number = item?.reservationmaster?.guestmaster?.phone_number;
         item.room_service_items = item?.room_service_item_master?.map((ele) => {
-          let { fooditemmaster, ...val } = ele;
-          return { ...val, ...fooditemmaster };
+          let {fooditemmaster, ...val} = ele;
+          return {...val, ...fooditemmaster};
         });
         delete item.reservationmaster;
         delete item.room_service_item_master;
@@ -1143,7 +1152,7 @@ const currentdayroomservice = async (req, res, next) => {
     }
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -1173,7 +1182,7 @@ const paymentstatus = async (req, res, next) => {
     });
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -1205,22 +1214,22 @@ const invoiceNum = async (req, res, next) => {
     }
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
 //room invoice by date
 const viewroomservicebydate = async (req, res, next) => {
-  let {from, to} = req.body
+  let {from, to} = req.body;
   from = new Date(from);
-    to = new Date(to);
+  to = new Date(to);
   try {
     const result = await prisma.roomservicemaster.findMany({
-      where:{
-        order_date:{
+      where: {
+        order_date: {
           gte: from,
-          lte: to
-        }
+          lte: to,
+        },
       },
       orderBy: {
         id: "desc",
@@ -1249,7 +1258,7 @@ const viewroomservicebydate = async (req, res, next) => {
     });
 
     if (result.length === 0) {
-      return res.status(404).json({ status: false, message: "data not found" });
+      return res.status(404).json({status: false, message: "data not found"});
     }
 
     result?.forEach((el) => {
@@ -1270,7 +1279,7 @@ const viewroomservicebydate = async (req, res, next) => {
     });
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -1290,5 +1299,5 @@ module.exports = {
   editRoomServiceStatusPaid,
   paymentstatus,
   invoiceNum,
-  viewroomservicebydate
+  viewroomservicebydate,
 };
