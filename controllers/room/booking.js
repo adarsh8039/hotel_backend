@@ -17,6 +17,7 @@ const getAllBookingRoom = async (req, res, next) => {
     const count = await prisma.reservationmaster.count({
       where: {vendor_user_id: userDetails.id},
     });
+    // console.log(":::::::::::::", count, userDetails);
 
     if (count === 0) {
       return res.status(404).json({status: false, message: "data not found"});
@@ -381,6 +382,7 @@ const getBookingRoom = async (req, res, next) => {
 
 const bookRoom = async (req, res) => {
   try {
+    const {userDetails} = req.headers;
     let room_id = +req.params.id;
     req.body.booking_date = new Date(req.body.booking_date);
     req.body.check_in = new Date(req.body.check_in);
@@ -523,6 +525,7 @@ const bookRoom = async (req, res) => {
         room_id: room_id,
         user_id: +userId,
         gst_status: gst_status,
+        vendor_user_id: userDetails.id,
         // after_discount_price: parseFloat(req.body.after_discount_price),
         perdayprice: parseFloat(req.body.perdayprice),
       },
