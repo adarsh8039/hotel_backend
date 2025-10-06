@@ -1,5 +1,5 @@
-const { default: id } = require("date-and-time/locale/id");
-const { prisma } = require("../../models/connection");
+const {default: id} = require("date-and-time/locale/id");
+const {prisma} = require("../../models/connection");
 const logger = require("../../utils/logger");
 
 /* BILLING */
@@ -7,7 +7,8 @@ const logger = require("../../utils/logger");
 //view biils
 const allbills = async (req, res, next) => {
   try {
-    const { from, to, criteria } = req.body;
+    const {from, to, criteria} = req.body;
+    const {userDetails} = req.headers;
 
     // Build filters for reservationmaster
     const reservationFilters = [];
@@ -50,6 +51,7 @@ const allbills = async (req, res, next) => {
 
     const result = await prisma.reservationmaster.findMany({
       where: {
+        vendor_user_id: userDetails.id,
         AND: reservationFilters,
       },
       orderBy: {
@@ -82,7 +84,7 @@ const allbills = async (req, res, next) => {
     });
 
     if (result.length === 0) {
-      return res.status(404).json({ status: false, message: "No data found" });
+      return res.status(404).json({status: false, message: "No data found"});
     }
 
     // Filter and map results using JavaScript function for invoice_date criteria
@@ -97,10 +99,10 @@ const allbills = async (req, res, next) => {
         return true;
       })
       .map((ser) => {
-        const { billingmaster, ...other } = ser;
+        const {billingmaster, ...other} = ser;
         other.bill_id = billingmaster[0]?.id;
         delete billingmaster[0]?.id;
-        const _ser = { ...other, ...billingmaster[0] };
+        const _ser = {...other, ...billingmaster[0]};
         _ser.room = _ser.roommaster;
         _ser.email = _ser.guest_email;
         _ser.fullname = _ser.guest_name;
@@ -115,7 +117,7 @@ const allbills = async (req, res, next) => {
     if (filteredResult.length === 0) {
       return res
         .status(404)
-        .json({ status: false, message: "No data found for invoice_date" });
+        .json({status: false, message: "No data found for invoice_date"});
     }
 
     res.status(200).json({
@@ -126,7 +128,7 @@ const allbills = async (req, res, next) => {
   } catch (error) {
     logger.error(error);
     console.error("Error: ", error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -143,7 +145,7 @@ const roominvoice = async (req, res, next) => {
     });
 
     if (count === 0) {
-      res.status(404).json({ status: false, message: "Data not found" });
+      res.status(404).json({status: false, message: "Data not found"});
     } else {
       const result = await prisma.reservationmaster.findFirst({
         where: {
@@ -201,7 +203,7 @@ const roominvoice = async (req, res, next) => {
     }
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -217,7 +219,7 @@ const orderinvoice = async (req, res, next) => {
     });
 
     if (count === 0) {
-      res.status(404).json({ status: false, message: "data not found" });
+      res.status(404).json({status: false, message: "data not found"});
     } else {
       const result = await prisma.reservationmaster.findMany({
         where: {
@@ -261,7 +263,7 @@ const orderinvoice = async (req, res, next) => {
       if (result.length === 0) {
         res
           .status(404)
-          .json({ status: false, message: "No orders found for this room" });
+          .json({status: false, message: "No orders found for this room"});
         return;
       }
 
@@ -294,7 +296,7 @@ const orderinvoice = async (req, res, next) => {
     }
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -311,7 +313,7 @@ const completeInvoice = async (req, res, next) => {
     });
 
     if (count === 0) {
-      res.status(404).json({ status: false, message: "Data not found" });
+      res.status(404).json({status: false, message: "Data not found"});
       return;
     }
 
@@ -385,7 +387,7 @@ const completeInvoice = async (req, res, next) => {
     });
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -394,9 +396,11 @@ const completeInvoice = async (req, res, next) => {
 //booked rooms
 const bookedrooms = async (req, res, next) => {
   try {
+    const {userDetails} = req.headers;
     // Fetch all rooms with status 'Booked'
     const result = await prisma.reservationmaster.findMany({
       where: {
+        vendor_user_id: userDetails.id,
         status: "COMPLETED",
       },
       include: {
@@ -429,7 +433,7 @@ const bookedrooms = async (req, res, next) => {
     if (result.length === 0) {
       res
         .status(404)
-        .json({ status: false, message: "No booked rooms found", result: [] });
+        .json({status: false, message: "No booked rooms found", result: []});
       return;
     }
 
@@ -448,14 +452,14 @@ const bookedrooms = async (req, res, next) => {
     });
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
 //booked room with date filtering
 const bookedroomswithdate = async (req, res, next) => {
   try {
-    let { from, to } = await req.body;
+    let {from, to} = await req.body;
     let user_id = req.body.id;
 
     from = new Date(from);
@@ -507,7 +511,7 @@ const bookedroomswithdate = async (req, res, next) => {
     if (result.length === 0) {
       return res
         .status(404)
-        .json({ status: false, message: "No booked rooms found" });
+        .json({status: false, message: "No booked rooms found"});
     }
 
     result.forEach((ser) => {
@@ -525,7 +529,7 @@ const bookedroomswithdate = async (req, res, next) => {
     });
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -567,7 +571,7 @@ const cancelrooms = async (req, res, next) => {
     if (result.length === 0) {
       res
         .status(404)
-        .json({ status: false, message: "No cancelled rooms found" });
+        .json({status: false, message: "No cancelled rooms found"});
       return;
     }
 
@@ -586,14 +590,14 @@ const cancelrooms = async (req, res, next) => {
     });
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
 //cancel room with date filtering
 const cancelroomswithdate = async (req, res, next) => {
   try {
-    let { from, to } = await req.body;
+    let {from, to} = await req.body;
     const user_id = req.body.id;
 
     from = new Date(from);
@@ -646,7 +650,7 @@ const cancelroomswithdate = async (req, res, next) => {
     if (result.length === 0) {
       return res
         .status(404)
-        .json({ status: false, message: "No cancelled rooms found" });
+        .json({status: false, message: "No cancelled rooms found"});
     }
 
     result.forEach((ser) => {
@@ -664,7 +668,7 @@ const cancelroomswithdate = async (req, res, next) => {
     });
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -711,7 +715,7 @@ const foodorder = async (req, res, next) => {
       ser.fooditems = ser.room_service_item_master.map((item) => {
         let food = item?.fooditemmaster;
         delete item?.fooditemmaster;
-        return { ...item, ...food };
+        return {...item, ...food};
       });
       ser.guest = ser?.reservationmaster?.guestmaster;
       ser.room = ser?.reservationmaster?.roommaster;
@@ -721,7 +725,7 @@ const foodorder = async (req, res, next) => {
     });
 
     if (result.length === 0) {
-      return res.status(404).json({ status: false, message: "No data found" });
+      return res.status(404).json({status: false, message: "No data found"});
     }
 
     res.status(200).json({
@@ -731,21 +735,21 @@ const foodorder = async (req, res, next) => {
     });
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
 // food order report with date filtering
 const foodorderwithdate = async (req, res, next) => {
   try {
-    let { from, to, phone_number } = await req.body;
+    let {from, to, phone_number} = await req.body;
 
     from = new Date(from);
     to = new Date(to);
 
     let result = await prisma.roomservicemaster.findMany({
       where: {
-        ...(phone_number && { phone_number: phone_number }),
+        ...(phone_number && {phone_number: phone_number}),
       },
       include: {
         reservationmaster: {
@@ -784,7 +788,7 @@ const foodorderwithdate = async (req, res, next) => {
       ser.fooditems = ser?.room_service_item_master.map((item) => {
         let food = item?.fooditemmaster;
         delete item?.fooditemmaster;
-        return { ...item, ...food };
+        return {...item, ...food};
       });
       ser.guest = ser?.reservationmaster?.guestmaster;
       ser.room = ser?.reservationmaster?.roommaster;
@@ -801,7 +805,7 @@ const foodorderwithdate = async (req, res, next) => {
     });
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -825,17 +829,17 @@ const userreport = async (req, res, next) => {
 
     res
       .status(200)
-      .json({ status: true, message: "Data fetched successfully", result });
+      .json({status: true, message: "Data fetched successfully", result});
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
 //user report with date filtering
 const userwithdate = async (req, res, next) => {
   try {
-    let { from, to } = await req.body;
+    let {from, to} = await req.body;
     let user_id = req.body.id;
 
     from = new Date(from);
@@ -843,7 +847,7 @@ const userwithdate = async (req, res, next) => {
 
     let result = await prisma.guestmaster.findMany({
       where: {
-        ...(user_id && { id: +user_id }),
+        ...(user_id && {id: +user_id}),
         created_at: {
           gt: from,
           lte: to,
@@ -862,15 +866,15 @@ const userwithdate = async (req, res, next) => {
     });
 
     if (result.length === 0) {
-      return res.status(404).json({ status: false, message: "No data found" });
+      return res.status(404).json({status: false, message: "No data found"});
     }
 
     res
       .status(200)
-      .json({ status: true, message: "Data fetched successfully", result });
+      .json({status: true, message: "Data fetched successfully", result});
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -913,7 +917,7 @@ const allbooking = async (req, res, next) => {
 
     // If no rooms found
     if (result.length === 0) {
-      res.status(404).json({ status: false, message: "No rooms found" });
+      res.status(404).json({status: false, message: "No rooms found"});
       return;
     }
 
@@ -932,14 +936,14 @@ const allbooking = async (req, res, next) => {
     });
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
 //all booking with filter
 const bookingwithdate = async (req, res, next) => {
   try {
-    let { from, to } = await req.body;
+    let {from, to} = await req.body;
 
     from = new Date(from);
     to = new Date(to);
@@ -987,7 +991,7 @@ const bookingwithdate = async (req, res, next) => {
     if (result.length === 0) {
       return res
         .status(404)
-        .json({ status: false, message: "No booked rooms found" });
+        .json({status: false, message: "No booked rooms found"});
     }
 
     result.forEach((ser) => {
@@ -1005,7 +1009,7 @@ const bookingwithdate = async (req, res, next) => {
     });
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -1051,14 +1055,14 @@ const paymentstatus = async (req, res, next) => {
     });
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
 const updateInvoiceGSTStatus = async (req, res, next) => {
   try {
     const reservationId = +req.params.id;
-    const { gst_status } = req.body;
+    const {gst_status} = req.body;
 
     // Fetch reservations with the given invoice number
     const reservations = await prisma.reservationmaster.findMany({
@@ -1133,7 +1137,7 @@ const updateInvoiceGSTStatus = async (req, res, next) => {
     });
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -1158,8 +1162,8 @@ const updateInvoiceStatusComplete = async (req, res, next) => {
 
     const transaction = await prisma.$transaction(async (prisma) => {
       const lastInvoice = await prisma.reservationmaster.findFirst({
-        select: { invoice_num: true },
-        orderBy: { invoice_num: "desc" },
+        select: {invoice_num: true},
+        orderBy: {invoice_num: "desc"},
       });
 
       let nextInvoiceNum = lastInvoice ? lastInvoice.invoice_num + 1 : 1;
@@ -1201,7 +1205,7 @@ const updateInvoiceStatusComplete = async (req, res, next) => {
         },
       });
 
-      return { reservation, billing };
+      return {reservation, billing};
     });
 
     res.status(200).json({
@@ -1218,14 +1222,14 @@ const updateInvoiceStatusComplete = async (req, res, next) => {
         message: error.message,
       });
     }
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
 // Guest history
 const guestHistorywithdate = async (req, res, next) => {
   try {
-    let { from, to } = await req.body;
+    let {from, to} = await req.body;
     const user_id = req.body.id;
 
     from = new Date(from);
@@ -1233,7 +1237,7 @@ const guestHistorywithdate = async (req, res, next) => {
 
     const guest = await prisma.guestmaster.findMany({
       where: {
-        ...(user_id && { id: +user_id }),
+        ...(user_id && {id: +user_id}),
         NOT: {
           role_id: 1,
         },
@@ -1284,7 +1288,7 @@ const guestHistorywithdate = async (req, res, next) => {
     });
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -1351,14 +1355,14 @@ const canclecheckout = async (req, res, next) => {
   } catch (error) {
     logger.error(error);
     console.log(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
 //all bills by date
 const allbillsbydate = async (req, res, next) => {
   try {
-    let { from, to } = req.body;
+    let {from, to} = req.body;
     from = new Date(from);
     to = new Date(to);
     const result = await prisma.reservationmaster.findMany({
@@ -1403,14 +1407,14 @@ const allbillsbydate = async (req, res, next) => {
     });
 
     if (result.length === 0) {
-      return res.status(404).json({ status: false, message: "No data found" });
+      return res.status(404).json({status: false, message: "No data found"});
     }
 
     let _result = result.map((ser) => {
-      let { billingmaster, ...other } = ser;
+      let {billingmaster, ...other} = ser;
       other.bill_id = billingmaster[0]?.id;
       delete billingmaster[0]?.id;
-      let _ser = { ...other, ...billingmaster[0] };
+      let _ser = {...other, ...billingmaster[0]};
       _ser.room = _ser.roommaster;
       _ser.email = _ser.guest_email;
       _ser.fullname = _ser.guest_name;
@@ -1430,7 +1434,7 @@ const allbillsbydate = async (req, res, next) => {
   } catch (error) {
     logger.error(error);
     console.error("Error: ", error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
