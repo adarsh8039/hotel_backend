@@ -36,6 +36,7 @@ model users {
   fooditemmaster              fooditemmaster[]              // New back-relation
   room_service_item_master    room_service_item_master[]    // New back-relation
   user_reservation_master     user_reservation_master[]     // New back-relation
+   companies                 company_master[]
 }
 
 model guestmaster {
@@ -271,6 +272,9 @@ model company_master {
   created_at              DateTime                  @default(now()) @db.Timestamp(0)
   updated_at              DateTime                  @default(now()) @db.Timestamp(0)
   status                  Boolean?                  @default(true)
+  user_id                 Int?                      // New nullable user_id field
+  
+  user                    users?                    @relation(fields: [user_id], references: [id], onDelete: SetNull)
 
   user_reservation_master user_reservation_master[]
 }
