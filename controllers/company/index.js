@@ -1,19 +1,23 @@
-const { prisma } = require("../../models/connection");
+const {prisma} = require("../../models/connection");
 const logger = require("../../utils/logger");
 const xlsx = require("xlsx");
 
 const allCompanies = async (req, res, next) => {
   try {
-    const count = await prisma.company_master.count();
+    const {userDetails} = req.headers;
+    const count = await prisma.company_master.count({
+      where: {user_id: userDetails.id},
+    });
 
     if (count === 0) {
-      res.status(404).json({ status: false, message: "data not found" });
+      res.status(404).json({status: false, message: "data not found"});
     } else {
       const result = await prisma.company_master.findMany({
-        where:{
-          NOT:{
+        where: {
+          user_id: userDetails.id,
+          NOT: {
             status: false,
-          }
+          },
         },
         orderBy: {
           id: "desc",
@@ -21,11 +25,11 @@ const allCompanies = async (req, res, next) => {
       });
       res
         .status(200)
-        .json({ status: true, message: "data fetched successfully", result });
+        .json({status: true, message: "data fetched successfully", result});
     }
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -38,7 +42,7 @@ const getCompany = async (req, res, next) => {
       },
     });
     if (count === 0) {
-      res.status(404).json({ status: false, message: "data not found" });
+      res.status(404).json({status: false, message: "data not found"});
     } else {
       const result = await prisma.company_master.findFirst({
         where: {
@@ -50,28 +54,32 @@ const getCompany = async (req, res, next) => {
       });
       res
         .status(200)
-        .json({ status: true, message: "data fetched successfully", result });
+        .json({status: true, message: "data fetched successfully", result});
     }
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
 const addCompany = async (req, res, next) => {
   try {
+    const {userDetails} = req.headers;
     data = await req.body;
+    data.user_id = userDetails.id;
 
-         // Check if gst number already exists in the databse
-         const existinggst = await prisma.company_master.findFirst({
-          where: {
-              company_gst: data.company_gst,
-          },
-      });
+    // Check if gst number already exists in the databse
+    const existinggst = await prisma.company_master.findFirst({
+      where: {
+        company_gst: data.company_gst,
+      },
+    });
 
-      if (existinggst) {
-          return res.status(500).json({ status: false, message: 'GST number already exists!' });
-      }
+    if (existinggst) {
+      return res
+        .status(500)
+        .json({status: false, message: "GST number already exists!"});
+    }
 
     const result = await prisma.company_master.create({
       data,
@@ -87,13 +95,13 @@ const addCompany = async (req, res, next) => {
     });
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
 const editCompany = async (req, res, next) => {
   try {
-    const { id } = req.params;
+    const {id} = req.params;
     data = await req.body;
 
     const result = await prisma.company_master.update({
@@ -112,7 +120,7 @@ const editCompany = async (req, res, next) => {
     });
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -120,7 +128,7 @@ const disablecompany = async (req, res, next) => {
   try {
     const id = +(await req.params.id);
     const result = await prisma.company_master.update({
-      data:{
+      data: {
         status: false,
       },
       where: {
@@ -132,10 +140,10 @@ const disablecompany = async (req, res, next) => {
     });
     res
       .status(200)
-      .json({ status: true, message: "Company deleted successfully", result });
+      .json({status: true, message: "Company deleted successfully", result});
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -151,12 +159,12 @@ const addCompanybyexcel = async (req, res) => {
     }
 
     // Read the uploaded Excel file
-    const workbook = xlsx.read(req.file.buffer, { type: "buffer" });
+    const workbook = xlsx.read(req.file.buffer, {type: "buffer"});
     const sheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[sheetName];
 
     // Convert the worksheet to JSON
-    const data = xlsx.utils.sheet_to_json(worksheet, { raw: false });
+    const data = xlsx.utils.sheet_to_json(worksheet, {raw: false});
 
     // Iterate over each row in the JSON data and insert into the database
     const promises = data.map(async (item) => {
@@ -174,32 +182,32 @@ const addCompanybyexcel = async (req, res) => {
     });
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
 //all company by date
 const allCompaniesbydate = async (req, res, next) => {
   try {
-    let {from, to} = req.body
+    let {from, to} = req.body;
     from = new Date(from);
     to = new Date(to);
     const count = await prisma.company_master.count();
 
     if (count === 0) {
-      res.status(404).json({ status: false, message: "data not found" });
+      res.status(404).json({status: false, message: "data not found"});
     } else {
       const result = await prisma.company_master.findMany({
-        where:{
-          AND:{
-            created_at:{
+        where: {
+          AND: {
+            created_at: {
               gte: from,
               lte: to,
-            }
+            },
           },
-          NOT:{
+          NOT: {
             status: false,
-          }
+          },
         },
         orderBy: {
           id: "desc",
@@ -207,33 +215,35 @@ const allCompaniesbydate = async (req, res, next) => {
       });
       res
         .status(200)
-        .json({ status: true, message: "data fetched successfully", result });
+        .json({status: true, message: "data fetched successfully", result});
     }
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
 //check gst exist or not
-const gstnumber = async (req,res,next)=>{
+const gstnumber = async (req, res, next) => {
   try {
     let data = req.body;
 
-        const existinggst = await prisma.company_master.findFirst({
-          where: {
-              company_gst: data.company_gst,
-          },
-      });
-      if (existinggst) {
-          return res.status(500).json({ status: false, message: 'GST number already exists!' });
-      }
-      res.status(200).json({status: true, message: "Gst number not exist"})
+    const existinggst = await prisma.company_master.findFirst({
+      where: {
+        company_gst: data.company_gst,
+      },
+    });
+    if (existinggst) {
+      return res
+        .status(500)
+        .json({status: false, message: "GST number already exists!"});
+    }
+    res.status(200).json({status: true, message: "Gst number not exist"});
   } catch (error) {
-    console.log(error)
-    res.status(500).json({status: false, message: "Internal server error"})
+    console.log(error);
+    res.status(500).json({status: false, message: "Internal server error"});
   }
-}
+};
 
 module.exports = {
   allCompanies,
@@ -243,5 +253,5 @@ module.exports = {
   disablecompany,
   addCompanybyexcel,
   allCompaniesbydate,
-  gstnumber
+  gstnumber,
 };

@@ -1,4 +1,4 @@
-const { prisma } = require("../../models/connection");
+const {prisma} = require("../../models/connection");
 const {
   subWeeks,
   startOfWeek,
@@ -16,6 +16,7 @@ const moment = require("moment");
 //dashboard details
 const dashboardDetails = async (req, res, next) => {
   try {
+    const {userDetails} = req.headers;
     let cardDetails = {
       totalRental: {
         weekly: 0,
@@ -46,7 +47,7 @@ const dashboardDetails = async (req, res, next) => {
 
     //GENERATING DATES FOR FILTERING WEEK , MONTH , YEAR
     const endDate = new Date();
-    const weekStart = startOfWeek(endDate, { weekStartsOn: 1 });
+    const weekStart = startOfWeek(endDate, {weekStartsOn: 1});
     const monthStart = startOfMonth(endDate);
     const yearStart = startOfYear(endDate);
 
@@ -57,6 +58,7 @@ const dashboardDetails = async (req, res, next) => {
         received_amount: true,
       },
       where: {
+        vendor_user_id: userDetails.id,
         check_in: {
           gt: weekStart,
           lte: endDate,
@@ -80,10 +82,12 @@ const dashboardDetails = async (req, res, next) => {
         received_amount: true,
       },
       where: {
+        vendor_user_id: userDetails.id,
         check_in: {
           gt: monthStart,
           lte: endDate,
         },
+
         status: {
           not: {
             equals: "CANCELLED",
@@ -103,6 +107,7 @@ const dashboardDetails = async (req, res, next) => {
         received_amount: true,
       },
       where: {
+        vendor_user_id: userDetails.id,
         check_in: {
           gt: yearStart,
           lte: endDate,
@@ -128,6 +133,7 @@ const dashboardDetails = async (req, res, next) => {
         remaining_amount: true,
       },
       where: {
+        vendor_user_id: userDetails.id,
         check_in: {
           gt: weekStart,
           lte: endDate,
@@ -152,6 +158,7 @@ const dashboardDetails = async (req, res, next) => {
         remaining_amount: true,
       },
       where: {
+        vendor_user_id: userDetails.id,
         check_in: {
           gt: monthStart,
           lte: endDate,
@@ -176,6 +183,7 @@ const dashboardDetails = async (req, res, next) => {
         remaining_amount: true,
       },
       where: {
+        vendor_user_id: userDetails.id,
         check_in: {
           gt: yearStart,
           lte: endDate,
@@ -215,6 +223,7 @@ const dashboardDetails = async (req, res, next) => {
         amount: true,
       },
       where: {
+        user_id: userDetails.id,
         date: {
           gt: monthStart,
           lte: endDate,
@@ -228,6 +237,7 @@ const dashboardDetails = async (req, res, next) => {
         amount: true,
       },
       where: {
+        user_id: userDetails.id,
         date: {
           gt: yearStart,
           lte: endDate,
@@ -243,6 +253,7 @@ const dashboardDetails = async (req, res, next) => {
         total: true,
       },
       where: {
+        user_id: userDetails.id,
         order_date: {
           gt: weekStart,
           lte: endDate,
@@ -257,6 +268,7 @@ const dashboardDetails = async (req, res, next) => {
         total: true,
       },
       where: {
+        user_id: userDetails.id,
         order_date: {
           gt: monthStart,
           lte: endDate,
@@ -271,6 +283,7 @@ const dashboardDetails = async (req, res, next) => {
         total: true,
       },
       where: {
+        user_id: userDetails.id,
         order_date: {
           gt: yearStart,
           lte: endDate,
@@ -308,6 +321,7 @@ const dashboardDetails = async (req, res, next) => {
 
         let totalVisitors = await prisma.reservationmaster.count({
           where: {
+            vendor_user_id: userDetails.id,
             check_in: {
               gte: month,
               lt: nextMonth,
@@ -329,6 +343,7 @@ const dashboardDetails = async (req, res, next) => {
     let groupedRooms = await prisma.reservationmaster.groupBy({
       by: "room_id",
       where: {
+        vendor_user_id: userDetails.id,
         check_in: {
           gte: yearStart,
           lt: endDate,
@@ -345,6 +360,7 @@ const dashboardDetails = async (req, res, next) => {
         if (result._count.room_id !== 0) {
           const room = await prisma.roommaster.findFirst({
             where: {
+              user_id: userDetails.id,
               id: result?.room_id,
             },
             select: {
@@ -371,6 +387,7 @@ const dashboardDetails = async (req, res, next) => {
 
     //FETCHING TABLE DATA
     const recentOrders = await prisma.roomservicemaster.findMany({
+      where: {user_id: userDetails.id},
       take: 12,
       orderBy: {
         order_date: "desc", // Sorting by order_date in descending order
@@ -418,8 +435,9 @@ const dashboardDetails = async (req, res, next) => {
         },
       },
       where: {
+        vendor_user_id: userDetails.id,
         AND: [
-          { status: "BOOKED" },
+          {status: "BOOKED"},
           // {
           //   check_in: {
           //     lte: endOfDay,
@@ -458,6 +476,7 @@ const dashboardDetails = async (req, res, next) => {
         },
       },
       where: {
+        vendor_user_id: userDetails.id,
         status: "BOOKED",
         check_in: {
           not: null,
@@ -477,13 +496,13 @@ const dashboardDetails = async (req, res, next) => {
     });
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
 const getBarChatData = async (req, res, next) => {
   try {
-    let { year } = await req.query;
+    let {year} = await req.query;
 
     //GENERATING MONTH FOR CHARTS
     const months = generateMonths(moment(year).format("YYYY"));
@@ -520,13 +539,13 @@ const getBarChatData = async (req, res, next) => {
     });
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
 const getPieChatData = async (req, res, next) => {
   try {
-    let { time } = await req.query;
+    let {time} = await req.query;
 
     let start = moment(time).startOf("month").add(1, "day").toISOString();
     let end = moment(time).endOf("month").toISOString();
@@ -583,7 +602,7 @@ const getPieChatData = async (req, res, next) => {
     });
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -593,43 +612,43 @@ const uploadImages = async (req, res) => {
     const images = await req.files.map((file) => file.filename);
     res
       .status(200)
-      .json({ status: true, message: "Images uploaded successfully!", images });
+      .json({status: true, message: "Images uploaded successfully!", images});
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
 // global search
 const dataObject = {
-  guest: { value: "guest", link: "guest" },
-  rooms: { value: "rooms", link: "rooms" },
-  bookings: { value: "bookings", link: "booking-record" },
-  "recent booking": { value: "recent booking", link: "booking-record" },
-  "booked rooms": { value: "booked rooms", link: "rooms" },
-  orders: { value: "orders", link: "room-service" },
-  "recent orders": { value: "recent orders", link: "room-service" },
-  "check in": { value: "check in", link: "booking-record" },
-  "check out": { value: "check out", link: "booking-record" },
-  guests: { value: "guests", link: "guest" },
-  "room services": { value: "room services", link: "room-service" },
-  services: { value: "services", link: "room-service" },
-  foods: { value: "foods", link: "item" },
-  "food items": { value: "food items", link: "item" },
-  invoice: { value: "invoice", link: "billing" },
-  billing: { value: "billing", link: "billing" },
-  "room invoice": { value: "room invoice", link: "billing" },
-  "order invoice": { value: "order invoice", link: "billing" },
-  reports: { value: "reports", link: "reports" },
-  expenses: { value: "expenses", link: "expese" },
-  "booking reports": { value: "booking reports", link: "reports" },
-  "food category": { value: "food category", link: "category" },
-  "available rooms": { value: "available rooms", link: "rooms" },
-  "cancelled booking": { value: "cancelled booking", link: "booking-record" },
+  guest: {value: "guest", link: "guest"},
+  rooms: {value: "rooms", link: "rooms"},
+  bookings: {value: "bookings", link: "booking-record"},
+  "recent booking": {value: "recent booking", link: "booking-record"},
+  "booked rooms": {value: "booked rooms", link: "rooms"},
+  orders: {value: "orders", link: "room-service"},
+  "recent orders": {value: "recent orders", link: "room-service"},
+  "check in": {value: "check in", link: "booking-record"},
+  "check out": {value: "check out", link: "booking-record"},
+  guests: {value: "guests", link: "guest"},
+  "room services": {value: "room services", link: "room-service"},
+  services: {value: "services", link: "room-service"},
+  foods: {value: "foods", link: "item"},
+  "food items": {value: "food items", link: "item"},
+  invoice: {value: "invoice", link: "billing"},
+  billing: {value: "billing", link: "billing"},
+  "room invoice": {value: "room invoice", link: "billing"},
+  "order invoice": {value: "order invoice", link: "billing"},
+  reports: {value: "reports", link: "reports"},
+  expenses: {value: "expenses", link: "expese"},
+  "booking reports": {value: "booking reports", link: "reports"},
+  "food category": {value: "food category", link: "category"},
+  "available rooms": {value: "available rooms", link: "rooms"},
+  "cancelled booking": {value: "cancelled booking", link: "booking-record"},
 };
 const search = (req, res) => {
   try {
-    const { word } = req.body;
+    const {word} = req.body;
     let found = false;
     const results = {};
 
@@ -643,15 +662,13 @@ const search = (req, res) => {
 
     // Sending response based on search result
     if (found) {
-      res.json({ status: true, message: "Word found in data", results });
+      res.json({status: true, message: "Word found in data", results});
     } else {
-      res
-        .status(404)
-        .json({ status: false, message: "Word not found in data" });
+      res.status(404).json({status: false, message: "Word not found in data"});
     }
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -675,7 +692,7 @@ const lastInvoiceno = async (req, res, next) => {
     });
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
@@ -686,7 +703,7 @@ const getalllogs = async (req, res, next) => {
     const count = await prisma.logmaster.count();
 
     if (count === 0) {
-      res.status(404).json({ status: false, message: "data not found" });
+      res.status(404).json({status: false, message: "data not found"});
     } else {
       const result = await prisma.logmaster.findMany({
         orderBy: {
@@ -695,24 +712,24 @@ const getalllogs = async (req, res, next) => {
       });
       res
         .status(200)
-        .json({ status: true, message: "data fetched successfully", result });
+        .json({status: true, message: "data fetched successfully", result});
     }
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
 //all logs by date
 const logsbydate = async (req, res, next) => {
   try {
-    let { from, to } = req.body;
+    let {from, to} = req.body;
     from = new Date(from);
     to = new Date(to);
     const count = await prisma.logmaster.count();
 
     if (count === 0) {
-      res.status(404).json({ status: false, message: "data not found" });
+      res.status(404).json({status: false, message: "data not found"});
     } else {
       const result = await prisma.logmaster.findMany({
         where: {
@@ -724,11 +741,11 @@ const logsbydate = async (req, res, next) => {
       });
       res
         .status(200)
-        .json({ status: true, message: "data fetched successfully", result });
+        .json({status: true, message: "data fetched successfully", result});
     }
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({status: false, message: error.message});
   }
 };
 
