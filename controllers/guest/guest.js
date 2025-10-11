@@ -453,6 +453,7 @@ const disableguest = async (req, res, next) => {
 //add customer by excel
 const addguestbyexcel = async (req, res) => {
   try {
+    const {userDetails} = req.headers;
     // Ensure req.file is defined
     if (!req.file) {
       return res.status(400).json({
@@ -474,6 +475,8 @@ const addguestbyexcel = async (req, res) => {
       await prisma.guestmaster.create({
         data: {
           role_id: 2,
+          document: item.document || "",
+          user_id: userDetails.id,
           ...item,
         },
       });

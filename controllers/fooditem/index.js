@@ -225,6 +225,7 @@ const disablefooditem = async (req, res, next) => {
 //add food item by excel
 const addfooditembyexcel = async (req, res) => {
   try {
+    const {userDetails} = req.headers;
     if (!req.file) {
       return res.status(400).json({
         status: false,
@@ -267,6 +268,7 @@ const addfooditembyexcel = async (req, res) => {
         // item_code: item?.item_code,
         // images: null,
         price: parseFloat(item?.price),
+        user_id: userDetails.id,
         // tax_type: item?.tax_type,
         // category_id: categoryId,
       });
