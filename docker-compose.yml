@@ -1,18 +1,11 @@
-# Use Node.js image
-FROM node:18-alpine
+version: "3.8"
 
-# Create app directory
-WORKDIR /usr/src/app
-
-# Copy package files and install dependencies
-COPY package*.json ./
-RUN npm install --production
-
-# Copy rest of app
-COPY . .
-
-# Expose port
-EXPOSE 5060
-
-# Run the app
-CMD ["node", "app.js"]
+services:
+  node-app:
+    build: .
+    container_name: node-app
+    ports:
+      - "5060:5060"
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
