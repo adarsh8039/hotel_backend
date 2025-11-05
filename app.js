@@ -25,9 +25,21 @@ app.set("prisma", prisma);
 app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({extended: false}));
+// app.use(
+//   cors({
+//     credentials: true,
+//     optionsSuccessStatus: 200,
+//   })
+// );
 app.use(
   cors({
+    origin: [
+      "https://pms.trackable.in", // your frontend domain
+      "https://www.pms.trackable.in", // optional
+    ],
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
     optionsSuccessStatus: 200,
   })
 );
