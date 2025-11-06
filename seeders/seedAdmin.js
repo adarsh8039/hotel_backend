@@ -17,11 +17,11 @@ async function main() {
 
   // Upsert admin user
   const admin = await prisma.users.upsert({
-    where: {email: "aditya@gmail.com"},
+    where: {email: "adarsh@gmail.com"},
     update: {}, // don't overwrite existing user
     create: {
       role_id: role.id,
-      email: "aditya@gmail.com",
+      email: "adarsh@gmail.com",
       password: hashedPassword,
       fullname: "Admin",
       phone_number: "",
