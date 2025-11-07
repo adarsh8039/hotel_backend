@@ -33,11 +33,7 @@ app.use(express.urlencoded({extended: false}));
 // );
 app.use(
   cors({
-    origin: [
-      "https://pms.trackable.in", // your frontend domain
-      "https://www.pms.trackable.in", // optional
-    ],
-    credentials: true,
+    origin: "*", // allow all origins
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     optionsSuccessStatus: 200,
