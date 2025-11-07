@@ -31,14 +31,15 @@ app.use(express.urlencoded({extended: false}));
 //     optionsSuccessStatus: 200,
 //   })
 // );
-app.use(
-  cors({
-    origin: "*", // allow all origins
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    optionsSuccessStatus: 200,
-  })
-);
+// app.use(
+//   cors({
+//     origin: "*", // allow all origins
+//     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+//     allowedHeaders: ["Content-Type", "Authorization"],
+//     optionsSuccessStatus: 200,
+//   })
+// );
+app.use(cors());
 app.use(cookieParser());
 // Session middleware setup
 app.use(
