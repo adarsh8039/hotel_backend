@@ -26,15 +26,30 @@ app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({extended: false}));
 
+// const corsOptions = {
+//   origin: "https://pms.trackable.in",
+//   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+//   allowedHeaders: ["Content-Type", "Authorization"],
+//   credentials: true, // if you need to send cookies or auth headers
+// };
+
+// app.use(cors(corsOptions));
+
+const allowedOrigins = ["https://pms.trackable.in", "*"];
+
 const corsOptions = {
-  origin: "https://pms.trackable.in",
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true, // if you need to send cookies or auth headers
+  credentials: true,
 };
-
-app.use(cors(corsOptions));
-// app.use(cors());
 app.use(cookieParser());
 // Session middleware setup
 app.use(
