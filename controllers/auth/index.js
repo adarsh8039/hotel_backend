@@ -310,32 +310,49 @@ const generateOtp = () => {
 //reset password
 const resetpassword = async (req, res, next) => {
   try {
-    let Id = +req.params.id;
+    const {userDetails} = req.headers;
+    let Id = +userDetails.id;
 
-    if (!req.body.new_password) {
+    const {old_password, new_password} = req.body;
+
+    // ✅ Validate inputs
+    if (!old_password || !new_password) {
       return res.status(400).json({
         status: false,
-        message: "New password is required",
+        message: "Old and new passwords are required",
       });
     }
 
-    // Hash the new password provided
-    let newPasswordHash = await bcrypt.hash(req.body.new_password, 10);
+    // ✅ Fetch the existing user record
+    const user = await prisma.users.findUnique({
+      where: {id: Id},
+      select: {id: true, password: true},
+    });
 
-    // Prepare data object for update
-    let updateData = {
-      password: newPasswordHash,
-    };
+    if (!user) {
+      return res.status(404).json({
+        status: false,
+        message: "User not found",
+      });
+    }
 
-    // Update the user's details in the database
-    const result = await prisma.guestmaster.update({
-      where: {
-        id: Id,
-      },
-      data: updateData,
-      select: {
-        id: true,
-      },
+    // ✅ Verify old password
+    const isMatch = await bcrypt.compare(old_password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({
+        status: false,
+        message: "Incorrect old password",
+      });
+    }
+
+    // ✅ Hash the new password
+    const newPasswordHash = await bcrypt.hash(new_password, 10);
+
+    // ✅ Update user's password
+    const result = await prisma.users.update({
+      where: {id: Id},
+      data: {password: newPasswordHash},
+      select: {id: true},
     });
 
     console.log("Password updated successfully:", result);
@@ -346,10 +363,150 @@ const resetpassword = async (req, res, next) => {
       result,
     });
   } catch (error) {
-    logger.error(error);
+    logger?.error?.(error);
     console.error("Error updating password:", error);
     res.status(500).json({status: false, message: error.message});
   }
 };
 
-module.exports = {loginUser, sendOtp, verifyOtp, resetpassword};
+const getUserProfiles = async (req, res) => {
+  try {
+    const {userDetails} = req.headers;
+
+    if (!userDetails || !userDetails.id) {
+      return res.status(401).json({
+        status: false,
+        message: "Unauthorized: Missing user details",
+      });
+    }
+
+    const userId = +userDetails.id;
+
+    // Fetch user with selected fields
+    const user = await prisma.users.findUnique({
+      where: {id: userId},
+      select: {
+        id: true,
+        fullname: true,
+        email: true,
+        phone_number: true,
+        image: true,
+        gst_number: true,
+        role_id: true,
+        status: true,
+        created_at: true,
+        updated_at: true,
+        rolemaster: {
+          select: {
+            id: true,
+            role: true,
+          },
+        },
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        status: false,
+        message: "User not found",
+      });
+    }
+
+    res.status(200).json({
+      status: true,
+      message: "User profile fetched successfully",
+      data: user,
+    });
+  } catch (error) {
+    logger?.error?.(error);
+    console.error("Error fetching user profile:", error);
+    res.status(500).json({
+      status: false,
+      message: "Something went wrong while fetching profile",
+      error: error.message,
+    });
+  }
+};
+
+const updateUserProfile = async (req, res, next) => {
+  try {
+    const {userDetails} = req.headers;
+
+    if (!userDetails || !userDetails.id) {
+      return res.status(401).json({
+        status: false,
+        message: "Unauthorized: Missing user details",
+      });
+    }
+
+    const userId = +userDetails.id;
+    const {fullname, phone_number, gst_number} = req.body;
+
+    const updateData = {};
+
+    // ✅ Handle uploaded image (if any)
+    console.log("req.files", req.files);
+    if (req?.files?.image && req.files.image.length > 0) {
+      updateData.image = `${req.files.image[0].filename}`;
+    }
+
+    // ✅ Add other provided fields
+    if (fullname) updateData.fullname = fullname;
+    if (phone_number) updateData.phone_number = phone_number;
+    if (gst_number) updateData.gst_number = gst_number;
+
+    // ✅ Ensure at least one field to update
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({
+        status: false,
+        message: "Please provide at least one field to update",
+      });
+    }
+
+    // ✅ Update user in DB
+    const updatedUser = await prisma.users.update({
+      where: {id: userId},
+      data: updateData,
+      select: {
+        id: true,
+        fullname: true,
+        email: true,
+        phone_number: true,
+        image: true,
+        gst_number: true,
+        role_id: true,
+        status: true,
+        updated_at: true,
+        rolemaster: {
+          select: {
+            id: true,
+            role: true,
+          },
+        },
+      },
+    });
+
+    res.status(200).json({
+      status: true,
+      message: "Profile updated successfully",
+      data: updatedUser,
+    });
+  } catch (error) {
+    logger?.error?.(error);
+    console.error("Error updating user profile:", error);
+    res.status(500).json({
+      status: false,
+      message: "Something went wrong while updating profile",
+      error: error.message,
+    });
+  }
+};
+
+module.exports = {
+  loginUser,
+  sendOtp,
+  verifyOtp,
+  resetpassword,
+  getUserProfiles,
+  updateUserProfile,
+};
