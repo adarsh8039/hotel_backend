@@ -35,7 +35,7 @@ app.use(express.urlencoded({extended: false}));
 
 // app.use(cors(corsOptions));
 
-const allowedOrigins = ["https://pms.trackable.in", "*"];
+const allowedOrigins = ["https://pms.trackable.in"];
 
 const corsOptions = {
   origin: function (origin, callback) {
