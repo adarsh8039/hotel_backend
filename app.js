@@ -25,15 +25,22 @@ app.set("prisma", prisma);
 app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({extended: false}));
-// app.use(
-//   cors({
-//     credentials: true,
-//     optionsSuccessStatus: 200,
-//   })
-// );
+
+const allowedOrigins = [
+  "https://pms.trackable.in", // your specific domain
+  "*",
+];
+
 app.use(
   cors({
-    origin: "*", // allow all origins
+    origin: function (origin, callback) {
+      // Allow requests with no origin (e.g., mobile apps, Postman)
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     optionsSuccessStatus: 200,
