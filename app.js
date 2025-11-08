@@ -26,8 +26,24 @@ app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({extended: false}));
 
+// const corsOptions = {
+//   origin: "https://pms.trackable.in",
+//   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+//   allowedHeaders: ["Content-Type", "Authorization"],
+//   credentials: true, // if you need to send cookies or auth headers
+// };
+
+// app.use(cors(corsOptions));
+
 const corsOptions = {
-  origin: "https://pms.trackable.in",
+  origin: (origin, callback) => {
+    // Allow the fixed origin and all other origins
+    if (origin === "https://pms.trackable.in" || origin === undefined) {
+      callback(null, true); // Allow this origin
+    } else {
+      callback(null, true); // Allow all other origins
+    }
+  },
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true, // if you need to send cookies or auth headers
