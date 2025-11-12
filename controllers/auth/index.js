@@ -9,6 +9,100 @@ dotenv.config({path: ".env"});
 const {prisma} = require("../../models/connection");
 const {token} = require("morgan");
 
+const registerUser = async (req, res) => {
+  try {
+    const {fullname, email, password, phone_number} = req.body;
+
+    // 🔍 Validate inputs
+    if (!fullname) {
+      return res
+        .status(400)
+        .json({status: false, message: "Full name is required"});
+    }
+    if (!email) {
+      return res
+        .status(400)
+        .json({status: false, message: "Email is required"});
+    }
+    if (!password) {
+      return res
+        .status(400)
+        .json({status: false, message: "Password is required"});
+    }
+
+    // 🔍 Check if user already exists
+    const existingUser = await prisma.users.findFirst({
+      where: {email},
+    });
+
+    if (existingUser) {
+      return res
+        .status(409)
+        .json({status: false, message: "Email already registered"});
+    }
+
+    // 🔐 Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // 🎭 Find role (default to "User" if not provided)
+    const userRole = await prisma.rolemaster.findFirst({
+      where: {role: "Admin"},
+    });
+
+    if (!userRole) {
+      return res.status(404).json({status: false, message: "Role not found"});
+    }
+
+    // 🧑‍💻 Create new user
+    const newUser = await prisma.users.create({
+      data: {
+        fullname,
+        email,
+        password: hashedPassword,
+        phone_number: phone_number || "",
+        role_id: userRole.id,
+        status: true,
+      },
+      select: {
+        id: true,
+        fullname: true,
+        email: true,
+        role_id: true,
+        rolemaster: {select: {role: true}},
+      },
+    });
+
+    // 🪪 Generate JWT Token
+    const jwtSecret = process.env.JWT_SECRET;
+    const token = jwt.sign(
+      {
+        id: newUser.id,
+        fullname: newUser.fullname,
+        role_id: newUser.role_id,
+        role: newUser.rolemaster.role,
+      },
+      jwtSecret,
+      {expiresIn: "48h"}
+    );
+
+    // ✅ Response
+    res.status(201).json({
+      status: true,
+      message: "Registration successful",
+      user: {
+        id: newUser.id,
+        fullname: newUser.fullname,
+        email: newUser.email,
+        role: newUser.rolemaster.role,
+      },
+      token,
+    });
+  } catch (error) {
+    console.error("❌ Error in registerUser:", error);
+    res.status(500).json({status: false, message: error.message});
+  }
+};
+
 const loginUser = async (req, res) => {
   try {
     const {email, password} = await req.body;
@@ -440,7 +534,7 @@ const updateUserProfile = async (req, res, next) => {
     }
 
     const userId = +userDetails.id;
-    const {fullname, phone_number, gst_number} = req.body;
+    const {fullname, phone_number, gst_number, address} = req.body;
 
     const updateData = {};
 
@@ -454,6 +548,7 @@ const updateUserProfile = async (req, res, next) => {
     if (fullname) updateData.fullname = fullname;
     if (phone_number) updateData.phone_number = phone_number;
     if (gst_number) updateData.gst_number = gst_number;
+    if (address) updateData.address = address;
 
     // ✅ Ensure at least one field to update
     if (Object.keys(updateData).length === 0) {
@@ -474,6 +569,7 @@ const updateUserProfile = async (req, res, next) => {
         phone_number: true,
         image: true,
         gst_number: true,
+        address: true,
         role_id: true,
         status: true,
         updated_at: true,
@@ -509,4 +605,5 @@ module.exports = {
   resetpassword,
   getUserProfiles,
   updateUserProfile,
+  registerUser,
 };
