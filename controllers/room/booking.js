@@ -413,6 +413,8 @@ const bookRoom = async (req, res) => {
     let mainPerson = persons.shift();
     let userId;
     let companyId;
+    console.log("persons:::", persons);
+    console.log("persons.shift():::", persons.shift());
 
     // Function to create or retrieve company
     const getOrCreateCompany = async (company_name, company_gst) => {
@@ -480,6 +482,8 @@ const bookRoom = async (req, res) => {
       //   });
       // }
     } else {
+      console.log("::::::::::::::::::::::::::::::");
+
       const guestData = {
         role_id: 2,
         fullname: mainPerson.fullname,
@@ -490,6 +494,7 @@ const bookRoom = async (req, res) => {
         nationality: mainPerson.nationality,
         document: mainPerson.document || "", // Add document if provided
         document_images: mainPerson.document_images.join(",") || "",
+        user_id: userDetails.id,
       };
 
       const guest = await prisma.guestmaster.create({
