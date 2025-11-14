@@ -488,6 +488,7 @@ const getUserProfiles = async (req, res) => {
         gst_number: true,
         role_id: true,
         status: true,
+        address: true,
         created_at: true,
         updated_at: true,
         rolemaster: {
