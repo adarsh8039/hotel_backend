@@ -49,6 +49,39 @@ const allbills = async (req, res, next) => {
       });
     }
 
+    // const result = await prisma.reservationmaster.findMany({
+    //   where: {
+    //     vendor_user_id: userDetails.id,
+    //     AND: reservationFilters,
+    //   },
+    //   orderBy: {
+    //     id: "desc",
+    //   },
+    //   include: {
+    //     roommaster: {
+    //       select: {
+    //         title: true,
+    //         perdayprice: true,
+    //         floor_no: true,
+    //       },
+    //     },
+    //     billingmaster: {
+    //       where: {
+    //         AND: billingFilters,
+    //       },
+    //       select: {
+    //         id: true,
+    //         invoice_date: true,
+    //         guest_email: true,
+    //         invoice_num: true,
+    //         guest_name: true,
+    //         mobile_no: true,
+    //         company_gst: true,
+    //         company_name: true,
+    //       },
+    //     },
+    //   },
+    // });
     const result = await prisma.reservationmaster.findMany({
       where: {
         vendor_user_id: userDetails.id,
@@ -78,6 +111,49 @@ const allbills = async (req, res, next) => {
             mobile_no: true,
             company_gst: true,
             company_name: true,
+          },
+        },
+
+        // ✅ ADD ROOM SERVICE & ITEMS
+        roomservicemaster: {
+          select: {
+            id: true,
+            order_date: true,
+            sub_total: true,
+            cgst: true,
+            sgst: true,
+            igst: true,
+            total: true,
+            payment_status: true,
+            invoice_num: true,
+            concession: true,
+            phone_number: true,
+            fullname: true,
+            check_in: true,
+            check_out: true,
+
+            // Nested items
+            room_service_item_master: {
+              select: {
+                id: true,
+                quantity: true,
+                price: true,
+                cgst: true,
+                sgst: true,
+                igst: true,
+                total: true,
+                discount: true,
+
+                // include food item details too (optional)
+                fooditemmaster: {
+                  select: {
+                    id: true,
+                    item_name: true,
+                    price: true,
+                  },
+                },
+              },
+            },
           },
         },
       },

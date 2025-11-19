@@ -14,7 +14,13 @@ router.post("/reset/password", verifyToken, authController.resetpassword);
 router.get("/profile-details", verifyToken, authController.getUserProfiles);
 router.put(
   "/update-profile",
-  [upload.fields([{name: "image", maxCount: 1}, {name: "images"}])],
+  [
+    upload.fields([
+      {name: "image", maxCount: 1},
+      {name: "stamp_image", maxCount: 1},
+      {name: "sign_image", maxCount: 1},
+    ]),
+  ],
   verifyToken,
   authController.updateUserProfile
 );

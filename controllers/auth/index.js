@@ -4,6 +4,8 @@ const dotenv = require("dotenv");
 const nodemailer = require("nodemailer");
 const speakeasy = require("speakeasy");
 const logger = require("../../utils/logger");
+const fs = require("fs");
+const path = require("path");
 
 dotenv.config({path: ".env"});
 const {prisma} = require("../../models/connection");
@@ -485,6 +487,8 @@ const getUserProfiles = async (req, res) => {
         email: true,
         phone_number: true,
         image: true,
+        sign_image: true,
+        stamp_image: true,
         gst_number: true,
         role_id: true,
         status: true,
@@ -539,19 +543,78 @@ const updateUserProfile = async (req, res, next) => {
 
     const updateData = {};
 
-    // ✅ Handle uploaded image (if any)
-    console.log("req.files", req.files);
+    // Fetch current user for deleting old images
+    const currentUser = await prisma.users.findUnique({
+      where: {id: userId},
+    });
+
+    // ------------------------------
+    // 1️⃣ UPDATE PROFILE IMAGE
+    // ------------------------------
     if (req?.files?.image && req.files.image.length > 0) {
-      updateData.image = `${req.files.image[0].filename}`;
+      // delete old image
+      if (currentUser?.image) {
+        const imagePath = path.resolve(
+          __dirname,
+          "../../",
+          "uploads",
+          "users",
+          currentUser.image
+        );
+
+        if (fs.existsSync(imagePath)) fs.unlinkSync(imagePath);
+      }
+
+      updateData.image = req.files.image[0].filename;
     }
 
-    // ✅ Add other provided fields
+    // ------------------------------
+    // 2️⃣ UPDATE SIGN IMAGE
+    // ------------------------------
+    if (req?.files?.sign_image && req.files.sign_image.length > 0) {
+      if (currentUser?.sign_image) {
+        const signPath = path.resolve(
+          __dirname,
+          "../../",
+          "uploads",
+          "users",
+          currentUser.sign_image
+        );
+
+        if (fs.existsSync(signPath)) fs.unlinkSync(signPath);
+      }
+
+      updateData.sign_image = req.files.sign_image[0].filename;
+    }
+
+    // ------------------------------
+    // 3️⃣ UPDATE STAMP IMAGE
+    // ------------------------------
+    if (req?.files?.stamp_image && req.files.stamp_image.length > 0) {
+      if (currentUser?.stamp_image) {
+        const stampPath = path.resolve(
+          __dirname,
+          "../../",
+          "uploads",
+          "users",
+          currentUser.stamp_image
+        );
+
+        if (fs.existsSync(stampPath)) fs.unlinkSync(stampPath);
+      }
+
+      updateData.stamp_image = req.files.stamp_image[0].filename;
+    }
+
+    // ------------------------------
+    // 4️⃣ OTHER FIELDS
+    // ------------------------------
     if (fullname) updateData.fullname = fullname;
     if (phone_number) updateData.phone_number = phone_number;
     if (gst_number) updateData.gst_number = gst_number;
     if (address) updateData.address = address;
 
-    // ✅ Ensure at least one field to update
+    // Ensure at least one field to update
     if (Object.keys(updateData).length === 0) {
       return res.status(400).json({
         status: false,
@@ -559,7 +622,9 @@ const updateUserProfile = async (req, res, next) => {
       });
     }
 
-    // ✅ Update user in DB
+    // ------------------------------
+    // 5️⃣ UPDATE IN DATABASE
+    // ------------------------------
     const updatedUser = await prisma.users.update({
       where: {id: userId},
       data: updateData,
@@ -569,6 +634,8 @@ const updateUserProfile = async (req, res, next) => {
         email: true,
         phone_number: true,
         image: true,
+        sign_image: true,
+        stamp_image: true,
         gst_number: true,
         address: true,
         role_id: true,

@@ -813,7 +813,7 @@ const editInvoiceStampAndSignImages = async (req, res, next) => {
     let updateData = {...data};
     if (req?.files) {
       // Delete old image if exists
-      const currentGuest = await prisma.guestmaster.findUnique({
+      const currentGuest = await prisma.users.findUnique({
         where: {id: +userId},
       });
 
@@ -857,14 +857,14 @@ const editInvoiceStampAndSignImages = async (req, res, next) => {
       }
     }
 
-    const result = await prisma.guestmaster.update({
+    const result = await prisma.users.update({
       data: updateData,
       where: {id: +userId},
       select: {
         id: true,
         image: true,
-        default_checkin: true,
-        default_checkout: true,
+        // default_checkin: true,
+        // default_checkout: true,
         fullname: true,
       },
     });

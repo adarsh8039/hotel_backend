@@ -7,7 +7,6 @@ datasource db {
   url               = env("DATABASE_URL")
   shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
-
 model users {
   id           Int          @id @default(autoincrement())
   role_id      Int
@@ -18,28 +17,31 @@ model users {
   image        String?      @db.Text
   gst_number   String?      @db.VarChar(50)
   address      String?      @db.VarChar(255)
+
+  // NEW FIELDS
+  sign_image   String?      @db.Text
+  stamp_image  String?      @db.Text
+
   created_at   DateTime     @default(now()) @db.Timestamp(0)
   updated_at   DateTime     @default(now()) @updatedAt @db.Timestamp(0)
   status       Boolean      @default(true)
 
   rolemaster   rolemaster   @relation(fields: [role_id], references: [id], onUpdate: Restrict)
 
-  // Relations for standard user usage
-  // reservations     reservationmaster[]   @relation("UserReservations")
   billings         billingmaster[]
   logs             logmaster[]
 
-  // Vendor back‑relations (where user acts as vendor/hotel)
   guestmasters        guestmaster[]        @relation("UserGuestmaster")
   vendorRooms         roommaster[]         @relation("UserRoommaster")
   vendorReservations  reservationmaster[]  @relation("ReservationVendor")
   roomServices        roomservicemaster[]  @relation("UserRoomService")
-  expenses_master             expenses_master[]             // New back-relation
-  fooditemmaster              fooditemmaster[]              // New back-relation
-  room_service_item_master    room_service_item_master[]    // New back-relation
-  user_reservation_master     user_reservation_master[]     // New back-relation
-   companies                 company_master[]
+  expenses_master             expenses_master[]
+  fooditemmaster              fooditemmaster[]
+  room_service_item_master    room_service_item_master[]
+  user_reservation_master     user_reservation_master[]
+  companies                 company_master[]
 }
+
 
 model guestmaster {
   id               Int        @id @default(autoincrement())
